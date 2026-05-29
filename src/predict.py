@@ -3,38 +3,32 @@ import numpy as np
 import tensorflow as tf
 from tensorflow.keras.preprocessing import image
 
-print("Starting script...")
-
 IMG_SIZE = (224, 224)
-MODEL_PATH = "models/pepper_classifier.keras"
+MODEL_PATH = "models/classifier.keras"
 
-if len(sys.argv) < 2:
-    print("Usage: python src/predict.py <image_path>")
-    sys.exit(1)
-
-img_path = sys.argv[1]
-
-print("Loading model...")
-model = tf.keras.models.load_model(MODEL_PATH)
-
-print("Loading image...")
-img = image.load_img(img_path, target_size=IMG_SIZE)
-
-print("Converting image...")
-x = image.img_to_array(img)
-x = np.expand_dims(x, axis=0)
-
-print("Running prediction...")
-prediction = model.predict(x)[0][0]
-
-print("Prediction raw value:", prediction)
-
-if prediction >= 0.5:
-    label = "non_edible"
-    confidence = prediction
-else:
-    label = "edible"
-    confidence = 1 - prediction
-
-print(f"Prediction: {label}")
-print(f"Confidence: {confidence:.2%}")
+try:
+    model = tf.keras.models.load_model(MODEL_PATH)
+    print("Model loaded successfully.")
+except Exception as e:   
+    print(f"Error loading model: {e}")
+    sys.exit(1) 
+    
+# Streamlit integration -> need a function
+def predict_image(image_path):
+    try:
+        img = image.load_img(image_path, target_size=IMG_SIZE)
+        img_array = image.img_to_array(img) / 255.0
+        img_array = np.expand_dims(img_array, axis=0)
+        prediction = model.predict(img_array)[0][0]
+    except Exception as e:
+        print(f"Error processing image: {e}")
+        return "error", 0.0, 0.0
+    
+    if prediction >= 0.5:
+        label = "non_edible"
+        confidence = float(prediction)
+    else:
+        label = "edible"
+        confidence = float(1 - prediction)
+    
+    return label, confidence, float(prediction)

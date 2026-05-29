@@ -7,7 +7,7 @@ from PIL import Image
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
-from src.predict import predict_freshness
+from src.predict import predict_image as predict #TODO: Unify function names
 
 
 st.set_page_config(
@@ -193,7 +193,7 @@ def get_message(mode: str, label: str, confidence: float) -> tuple[str, str, str
     certainty = f"{confidence:.0%}"
 
     if mode == PRIVATE_MODE:
-        if label == "fresh":
+        if label == "edible":
             return (
                 "Spende voraussichtlich geeignet",
                 f"Das Bild wirkt visuell unauffaellig. Die automatische Ersteinschaetzung liegt bei {certainty}.",
@@ -206,7 +206,7 @@ def get_message(mode: str, label: str, confidence: float) -> tuple[str, str, str
             "Naechster Schritt: Nur anbieten, wenn Geruch, Verpackung, Hygiene und Zustand zusaetzlich menschlich geprueft wurden.",
         )
 
-    if label == "fresh":
+    if label == "edible":
         return (
             "Prioritaet: normale Weiterverarbeitung",
             f"Die Ware wirkt visuell verwendbar. Die automatische Ersteinschaetzung liegt bei {certainty}.",
@@ -311,7 +311,7 @@ with right_col:
         st.image(image, caption="Hochgeladenes Bild", use_container_width=True)
 
         try:
-            label, confidence, _ = predict_freshness(image)
+            label, confidence, _ = predict(image.convert("RGB"))
         except FileNotFoundError as error:
             st.error(str(error))
             st.stop()
@@ -319,7 +319,7 @@ with right_col:
         render_summary(context, mode)
 
         title, body, action = get_message(mode, label, confidence)
-        result_class = "fresh" if label == "fresh" else "spoiled"
+        result_class = "fresh" if label == "edible" else "spoiled"
 
         st.markdown(
             f"""
