@@ -1,6 +1,7 @@
 import sys
 import numpy as np
 import tensorflow as tf
+import PIL.Image as Image
 from tensorflow.keras.preprocessing import image
 
 IMG_SIZE = (224, 224)
@@ -16,10 +17,14 @@ except Exception as e:
 # Streamlit integration -> need a function
 def predict_image(image_path):
     try:
-        img = image.load_img(image_path, target_size=IMG_SIZE)
-        img_array = image.img_to_array(img) / 255.0
-        img_array = np.expand_dims(img_array, axis=0)
-        prediction = model.predict(img_array)[0][0]
+        if isinstance(image_path, Image.Image):
+            img = image_path.resize(IMG_SIZE)
+        else:
+            img = image.load_img(image_path, target_size=IMG_SIZE)
+        
+        x = image.img_to_array(img)
+        x = np.expand_dims(x, axis=0)
+        prediction = model.predict(x)[0][0]
     except Exception as e:
         print(f"Error processing image: {e}")
         return "error", 0.0, 0.0
