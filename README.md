@@ -8,7 +8,7 @@ git clone https://github.com/Timbakimbo/Food_Freshness_Categorizer
 cd Food_Freshness_Categorizer
 ```
 
-2. Setup a virtual environment for development purposes:
+2. Setup a environment:
 ```
 python -m venv .venv
 source .venv/bin/activate    # Windows: venv\Scripts\activate
@@ -22,6 +22,25 @@ pip install -r requirements.txt
 4. Start Streamlit:
 ```
 streamlit run app/streamlit.py
+```
+
+5. For development purposes:
+```
+# Run a local prediction
+python main.py predict path/to/image.jpg
+
+#TODO: Train the classifier
+python main.py train --data-dir data
+```
+## Tests
+```
+# EASY: 
+python main.py predict data/raw/edible/paprika/paprika12.jpeg
+python main.py predict data/raw/non_edible/banane/banane1.png
+
+# HARD: 
+python main.py predict data/raw/edible/banane/banane17.jpg
+python main.py predict data/raw/non_edible/paprika/paprika19.jpeg
 ```
 
 # Structure
