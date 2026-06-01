@@ -1,5 +1,0 @@
-# Pinned dependencies (update as needed)
-numpy==1.26.3
-tensorflow>=2.13.0,<2.16.0
-pillow==11.3.0
-streamlit>=1.57.0

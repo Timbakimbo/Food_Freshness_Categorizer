@@ -3,34 +3,35 @@
 # Quickstart
 
 1. Setup the repository:
-```
+```bash
 git clone https://github.com/Timbakimbo/Food_Freshness_Categorizer
 cd Food_Freshness_Categorizer
 ```
 
-2. Setup a environment:
-```
-python -m venv .venv
-source .venv/bin/activate    # Windows: venv\Scripts\activate
+2. Install dependencies:
+
+If UV is not installed yet, have a look at it [here!](https://docs.astral.sh/uv/)
+```bash
+uv sync
 ```
 
-3. Install all dependencies:
-```
-pip install -r requirements.txt
-```
-
-4. Start Streamlit:
-```
-streamlit run app/streamlit.py
+3. Run a local prediction:
+```bash
+uv run python main.py predict path/to/image.jpg
 ```
 
-5. For development purposes:
+4. Run it with Streamlit:
+```bash
+uv run streamlit run app/streamlit.py
 ```
-# Run a local prediction
-python main.py predict path/to/image.jpg
 
-#TODO: Train the classifier
-python main.py train --data-dir data
+5. Train the classifier:
+```bash
+# Train with default data (no --data-dir needed, uses config)
+uv run python main.py train
+
+# Train with external data
+uv run python main.py train --data-dir /different/path
 ```
 ## Tests
 ```
