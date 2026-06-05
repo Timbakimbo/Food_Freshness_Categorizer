@@ -3,10 +3,11 @@ from keras import layers
 from keras.applications import MobileNetV2
 from keras.utils import image_dataset_from_directory
 from keras.applications.mobilenet_v2 import preprocess_input
+from util import plot_history
 
 IMG_SIZE = (224, 224)
 BATCH_SIZE = 8
-EPOCHS = 10
+EPOCHS = 25
 
 # -----------------------------
 # DATASETS
@@ -41,6 +42,7 @@ val_dataset = val_dataset.prefetch(buffer_size=AUTOTUNE)
 # -----------------------------
 
 base_model = MobileNetV2(
+    name="mobilenet_v2",
     weights="imagenet",
     include_top=False,
     input_shape=(224, 224, 3)
@@ -92,4 +94,26 @@ history = model.fit(
 # SAVE
 # -----------------------------
 
-model.save("models/classifier.keras")
+model.save(f"models/{base_model.name}_classifier.keras")
+keys = history.history
+log_text = f"""
+=== Training completed. ===
+Model: {base_model.name}
+Dataset: {len(train_dataset) * BATCH_SIZE} train samples, {len(val_dataset) * BATCH_SIZE} val samples
+Epochs: {history.params['epochs']} | Steps per epoch: {history.params['steps']}
+Total training time: {len(keys['loss'])} epochs
+
+Final training loss: {keys['loss'][-1]:.4f}
+Final training accuracy: {keys['accuracy'][-1]:.4f}
+
+Final validation loss: {keys['val_loss'][-1]:.4f}
+Final validation accuracy: {keys['val_accuracy'][-1]:.4f}
+"""
+
+print(log_text)
+plot_history(history, save_path=f"logs/training_history_plot.png")
+
+with open(f"logs/training.log", "a") as f:
+    f.write(log_text)
+    print(f"Saved training log → logs/training.log")
+    
