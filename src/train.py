@@ -1,13 +1,13 @@
 import tensorflow as tf
 from keras import layers
-from keras.applications import MobileNetV2
+from keras.applications import MobileNetV2, ResNet50V2, MobileNetV3Large, EfficientNetV2S
 from keras.utils import image_dataset_from_directory
 from keras.applications.mobilenet_v2 import preprocess_input
 from util import plot_history
 
 IMG_SIZE = (224, 224)
 BATCH_SIZE = 8
-EPOCHS = 25
+EPOCHS = 10
 
 # -----------------------------
 # DATASETS
@@ -38,7 +38,7 @@ train_dataset = train_dataset.prefetch(buffer_size=AUTOTUNE)
 val_dataset = val_dataset.prefetch(buffer_size=AUTOTUNE)
 
 # -----------------------------
-# BASE MODEL
+# BASE MODEL: https://keras.io/api/applications/ 
 # -----------------------------
 
 base_model = MobileNetV2(
@@ -71,6 +71,8 @@ model = tf.keras.Model(inputs, outputs)
 # -----------------------------
 # COMPILE
 # -----------------------------
+# TODO: Checkpoints und Fine-tuning mit Callbacks etc.
+# https://keras.io/api/callbacks/model_checkpoint/
 
 model.compile(
     optimizer="adam",
@@ -111,7 +113,7 @@ Final validation accuracy: {keys['val_accuracy'][-1]:.4f}
 """
 
 print(log_text)
-plot_history(history, save_path=f"logs/training_history_plot.png")
+plot_history(history, save_path=f"logs/{base_model.name}_history_plot.png")
 
 with open(f"logs/training.log", "a") as f:
     f.write(log_text)
