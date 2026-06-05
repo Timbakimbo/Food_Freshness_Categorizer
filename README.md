@@ -17,7 +17,7 @@ If UV is not installed yet, have a look at it [here!](https://docs.astral.sh/uv/
 
 3. Run a local prediction:
 ```bash
-uv run python main.py predict path/to/image.jpg
+uv run main.py predict path/to/image.jpg
 ```
 
 4. Run it with Streamlit:
@@ -28,18 +28,18 @@ uv run streamlit run app/streamlit.py
 5. Train the classifier:
 ```bash
 # Train with default data (no --data-dir needed, uses config)
-uv run python main.py train
+uv run main.py train
 
 # Train with external data
-uv run python main.py train --data-dir /different/path
+uv run main.py train --data-dir /different/path
 ```
 ## Tests
 ```
 # EASY: 
-python main.py predict data/raw/edible/paprika/paprika12.jpeg
-python main.py predict data/raw/non_edible/banane/banane1.png
+uv run main.py predict data/raw/edible/paprika/paprika12.jpeg
+uv run main.py predict data/raw/non_edible/banane/banane1.png
 
 # HARD: 
-python main.py predict data/raw/edible/banane/banane17.jpg
-python main.py predict data/raw/non_edible/paprika/paprika19.jpeg
+uv run main.py predict data/raw/edible/banane/banane17.jpg
+uv run main.py predict data/raw/non_edible/paprika/paprika19.jpeg
 ```

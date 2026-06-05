@@ -1,7 +1,8 @@
 import tensorflow as tf
-from tensorflow.keras import layers, models
-from tensorflow.keras.applications import MobileNetV2
-from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
+from keras import layers
+from keras.applications import MobileNetV2
+from keras.utils import image_dataset_from_directory
+from keras.applications.mobilenet_v2 import preprocess_input
 
 IMG_SIZE = (224, 224)
 BATCH_SIZE = 8
@@ -11,7 +12,7 @@ EPOCHS = 10
 # DATASETS
 # -----------------------------
 
-train_dataset = tf.keras.utils.image_dataset_from_directory(
+train_dataset = image_dataset_from_directory(
     "data/train",
     image_size=IMG_SIZE,
     batch_size=BATCH_SIZE,
@@ -19,7 +20,7 @@ train_dataset = tf.keras.utils.image_dataset_from_directory(
     shuffle=True
 )
 
-val_dataset = tf.keras.utils.image_dataset_from_directory(
+val_dataset = image_dataset_from_directory(
     "data/val",
     image_size=IMG_SIZE,
     batch_size=BATCH_SIZE,

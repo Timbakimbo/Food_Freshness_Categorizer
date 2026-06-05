@@ -2,7 +2,7 @@ import sys
 import numpy as np
 import tensorflow as tf
 import PIL.Image as Image
-from tensorflow.keras.preprocessing import image
+from keras.utils import load_img, img_to_array
 
 IMG_SIZE = (224, 224)
 MODEL_PATH = "models/classifier.keras"
@@ -20,9 +20,9 @@ def predict_image(image_path):
         if isinstance(image_path, Image.Image):
             img = image_path.resize(IMG_SIZE)
         else:
-            img = image.load_img(image_path, target_size=IMG_SIZE)
+            img = load_img(image_path, target_size=IMG_SIZE)
         
-        x = image.img_to_array(img)
+        x = img_to_array(img)
         x = np.expand_dims(x, axis=0)
         prediction = model.predict(x)[0][0]
     except Exception as e:

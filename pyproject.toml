@@ -3,8 +3,9 @@ name = "food-freshness-categorizer"
 version = "0.1.0"
 requires-python = ">=3.10"
 dependencies = [
+    "keras>=3.12.2",
     "numpy==1.26.3",
     "pillow==11.3.0",
     "streamlit>=1.57.0",
-    "tensorflow>=2.13.0,<2.16.0",
+    "tensorflow>=2.18.1",
 ]
