@@ -27,7 +27,7 @@ uv run streamlit run app/streamlit.py
 
 5. Evaluate the classifier:
 ```bash
-uv run main.py evaluate --model models/...
+uv run main.py evaluate --model models/classifier.keras
 ```
 ## Tests
 ```
