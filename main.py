@@ -5,19 +5,17 @@ from pathlib import Path
 from PIL import Image
 from src.predict import predict_image as predict
 
-# Training function for CLI
-def run_training(data_dir: Path, epochs: int, batch_size: int, model_path: Path) -> int:
+# Evaluation function for CLI
+def run_evaluation(model: Path, validation: Path, batch_size: int, ) -> None:
     command = [
         sys.executable,
-        "src/train.py",
-        "--data-dir",
-        str(data_dir),
-        "--epochs",
-        str(epochs),
+        "src/evaluate.py",
+        "--model",
+        str(model),
+        "--validation",
+        str(validation),
         "--batch-size",
         str(batch_size),
-        "--model-path",
-        str(model_path),
     ]
     result = subprocess.run(command)
     return result.returncode
@@ -35,35 +33,27 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="CLI")
     subparsers = parser.add_subparsers(dest="command", required=True)
     
-    # Predict subcommand
     predict_parser = subparsers.add_parser("predict", help="Run inference on a single image.")
     predict_parser.add_argument("image", type=Path, help="Path to the image to classify.")
     
-    #TODO: Train subcommand
-    train_parser = subparsers.add_parser("train", help="Train the freshness classifier.")
-    train_parser.add_argument(
-        "--data-dir",
+    evaluate_parser = subparsers.add_parser("evaluate", help="Evaluate the classifiers.")
+    evaluate_parser.add_argument(
+        "--model",
         type=Path,
-        default=Path("data"),
-        help="Path to the data root containing train/ and val/ folders.",
+        required=True,
+        help="Path to the models root folder and choose a model.",
     )
-    train_parser.add_argument(
-        "--epochs",
-        type=int,
-        default=8,
-        help="Number of training epochs.",
+    evaluate_parser.add_argument(
+        "--validation",
+        type=Path,
+        default=Path("data/val"),
+        help="Path to the validation data.",
     )
-    train_parser.add_argument(
+    evaluate_parser.add_argument(
         "--batch-size",
         type=int,
-        default=16,
-        help="Batch size for training.",
-    )
-    train_parser.add_argument(
-        "--model-path",
-        type=Path,
-        default=Path("models/classifier.pth"),
-        help="Output path for the trained checkpoint.",
+        default=8,
+        help="Batch size for evaluation.",
     )
 
     args = parser.parse_args()
@@ -71,6 +61,8 @@ def main() -> None:
     # Execute the subcommands
     if args.command == "predict":
         run_prediction(args.image)
+    elif args.command == "evaluate":
+        run_evaluation(args.model, args.validation, args.batch_size)
     elif args.command == "train":
         #TODO: Training logic is handled in src/train.py and not implemented yet because it need more specifics about the training process and model architecture.
         print("Training functionality is not implemented in this CLI yet. Please run src/train.py directly.")  
