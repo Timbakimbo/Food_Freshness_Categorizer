@@ -25,13 +25,9 @@ uv run main.py predict path/to/image.jpg
 uv run streamlit run app/streamlit.py
 ```
 
-5. Train the classifier:
+5. Evaluate the classifier:
 ```bash
-# Train with default data (no --data-dir needed, uses config)
-uv run main.py train
-
-# Train with external data
-uv run main.py train --data-dir /different/path
+uv run main.py evaluate --model models/...
 ```
 ## Tests
 ```
