@@ -1,0 +1,22 @@
+{
+  "accuracy": 0.42857142857142855,
+  "precision_non_edible": 1.0,
+  "recall_non_edible": 0.42857142857142855,
+  "precision_edible": 0.0,
+  "recall_edible": 0.0,
+  "false_negatives_non_edible": 8,
+  "false_positives_non_edible": 0,
+  "confusion_matrix": {
+    "true_negative_edible": 0,
+    "false_positive_non_edible": 0,
+    "false_negative_non_edible": 8,
+    "true_positive_non_edible": 6
+  },
+  "image_dir": "data/new_raw",
+  "true_label": "non_edible",
+  "threshold": 0.45,
+  "num_images": 14,
+  "num_correct": 6,
+  "num_incorrect": 8,
+  "non_edible_detection_rate": 0.42857142857142855
+}

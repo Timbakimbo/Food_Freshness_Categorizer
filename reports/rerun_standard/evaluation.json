@@ -1,0 +1,15 @@
+{
+  "accuracy": 0.8064516129032258,
+  "precision_non_edible": 0.8333333333333334,
+  "recall_non_edible": 0.7142857142857143,
+  "precision_edible": 0.7894736842105263,
+  "recall_edible": 0.8823529411764706,
+  "false_negatives_non_edible": 8,
+  "false_positives_non_edible": 4,
+  "confusion_matrix": {
+    "true_negative_edible": 30,
+    "false_positive_non_edible": 4,
+    "false_negative_non_edible": 8,
+    "true_positive_non_edible": 20
+  }
+}

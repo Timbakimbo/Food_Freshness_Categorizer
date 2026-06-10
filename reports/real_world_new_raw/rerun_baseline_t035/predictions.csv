@@ -1,0 +1,15 @@
+image_path,true_label,predicted_label,is_correct,probability_non_edible,confidence
+data/new_raw/IMG_9815.jpeg,non_edible,non_edible,True,0.4184894263744354,0.4184894263744354
+data/new_raw/IMG_9816.jpeg,non_edible,edible,False,0.2951752841472626,0.704824686050415
+data/new_raw/IMG_9817.jpeg,non_edible,non_edible,True,0.4378640651702881,0.4378640651702881
+data/new_raw/IMG_9818.jpeg,non_edible,edible,False,0.34145164489746094,0.6585483551025391
+data/new_raw/IMG_9820.jpeg,non_edible,edible,False,0.2877679169178009,0.7122321128845215
+data/new_raw/IMG_9822.jpeg,non_edible,edible,False,0.12451080977916718,0.8754891753196716
+data/new_raw/IMG_9823.jpeg,non_edible,non_edible,True,0.5700002908706665,0.5700002908706665
+data/new_raw/IMG_9824.jpeg,non_edible,edible,False,0.07303480058908463,0.9269651770591736
+data/new_raw/IMG_9825.jpeg,non_edible,non_edible,True,0.9200010299682617,0.9200010299682617
+data/new_raw/IMG_9826.jpeg,non_edible,non_edible,True,0.6127877235412598,0.6127877235412598
+data/new_raw/IMG_9827.jpeg,non_edible,non_edible,True,0.6380716562271118,0.6380716562271118
+data/new_raw/IMG_9828.jpeg,non_edible,non_edible,True,0.8346343636512756,0.8346343636512756
+data/new_raw/IMG_9829.jpeg,non_edible,non_edible,True,0.9808713793754578,0.9808713793754578
+data/new_raw/IMG_9830.jpeg,non_edible,edible,False,0.055037591606378555,0.9449623823165894
