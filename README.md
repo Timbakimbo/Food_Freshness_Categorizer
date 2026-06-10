@@ -40,7 +40,9 @@ Dadurch ist das Modell Teil eines Human-in-the-loop-Prozesses. Ein niedrigerer T
 
 ### Validation Split
 
-Auf dem aktuellen Validation Split war die klassische Baseline ohne Online-Augmentation am stärksten:
+Der reguläre Validation Split `data/val/` enthält beide Klassen (`edible` und `non_edible`). Deshalb können hier vollständige Metriken wie Accuracy, Precision, Recall und Confusion Matrix berichtet werden.
+
+Auf diesem Validation Split war die klassische Baseline ohne Online-Augmentation am stärksten:
 
 | Modell | Augmentation | Accuracy | Precision `non_edible` | Recall `non_edible` | FN | FP |
 |---|---|---:|---:|---:|---:|---:|
@@ -65,7 +67,7 @@ Zusätzlich wurden 14 neue `non_edible` Smartphonebilder in `data/new_raw/` als 
 
 Für die Demo wird deshalb `models/updated_raw_standard.keras` mit Threshold `0.35` empfohlen.
 
-Wichtig: Da dieses Real-World-Holdout nur `non_edible` Bilder enthält, ist `12/14 = 85.7%` hier kein vollständiger Real-World-Accuracy-Wert, sondern der Recall bzw. die Detection Rate für die kritische Klasse. Für echte Real-World Accuracy braucht das Projekt zusätzlich neue `edible` Smartphonebilder.
+Wichtig: Das reguläre `data/val/` testet beide Klassen und liefert vollständige Validation-Metriken. Das zusätzliche Real-World-Holdout `data/new_raw/` enthält aktuell nur neue `non_edible` Smartphonebilder. Deshalb ist `12/14 = 85.7%` hier kein vollständiger Real-World-Accuracy-Wert, sondern der Recall bzw. die Detection Rate für die kritische Klasse auf neuen Smartphonebildern.
 
 ## Get Started
 
@@ -291,8 +293,9 @@ Behaltene Reports:
 
 - Der Datensatz ist klein.
 - Nicht alle Kategorien sind gleich stark vertreten.
-- Das Real-World-Holdout enthält aktuell nur `non_edible` Bilder.
-- Deshalb kann aktuell nur der Real-World-Recall für `non_edible` berichtet werden, nicht die vollständige Real-World Accuracy.
+- Der reguläre Validation Split enthält beide Klassen und erlaubt vollständige Validation-Metriken.
+- Das zusätzliche Real-World-Holdout enthält aktuell nur neue `non_edible` Smartphonebilder.
+- Deshalb kann für dieses separate Holdout aktuell nur der Real-World-Recall für `non_edible` berichtet werden, nicht die vollständige Real-World Accuracy.
 - Background-Augmentation ist unausgewogen und sollte nicht als finale Hauptstrategie interpretiert werden.
 - Object Detection ist im aktuellen Stand noch perspektivisch und nicht Teil des stabilen ML-CLI-Workflows.
 
