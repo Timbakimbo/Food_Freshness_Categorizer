@@ -5,7 +5,8 @@ import PIL.Image as Image
 from keras.utils import load_img, img_to_array
 
 IMG_SIZE = (224, 224)
-MODEL_PATH = "models/classifier.keras"
+MODEL_PATH = "models/updated_raw_standard.keras"
+THRESHOLD = 0.35
 
 try:
     model = tf.keras.models.load_model(MODEL_PATH)
@@ -29,7 +30,7 @@ def predict_image(image_path):
         print(f"Error processing image: {e}")
         return "error", 0.0, 0.0
     
-    if prediction >= 0.5:
+    if prediction >= THRESHOLD:
         label = "non_edible"
         confidence = float(prediction)
     else:

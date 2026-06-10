@@ -21,7 +21,8 @@ from PIL import Image, ImageDraw, ImageFont
 
 APP_VERSION = "0.2.0"
 ROOT = Path(__file__).resolve().parent
-sys.path.insert(0, str(ROOT))
+PROJECT_ROOT = ROOT.parent
+sys.path.insert(0, str(PROJECT_ROOT))
 
 SUPPORTED_ITEMS = [
     ("🍌", "Bananen"),
