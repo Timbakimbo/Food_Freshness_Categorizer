@@ -62,7 +62,7 @@ class TrainConfig:
     learning_rate: float = 1e-3
     dropout_rate: float = 0.2
     random_seed: int = 42
-    model_path: Path = MODEL_DIR / "food_freshness_mobilenetv2.keras"
+    model_path: Path = MODEL_DIR / "freshify_final.keras"
     report_dir: Path = REPORT_DIR
     data_dir: Path = DATA_DIR
     experiment_name: str = "baseline"

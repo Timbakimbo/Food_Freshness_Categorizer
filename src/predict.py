@@ -32,7 +32,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Predict food freshness from a single image.")
     parser.add_argument("image_path", type=Path)
     parser.add_argument("--model-path", type=Path, default=DEFAULT_TRAIN_CONFIG.model_path)
-    parser.add_argument("--threshold", type=float, default=0.5)
+    parser.add_argument("--threshold", type=float, default=0.35)
     return parser.parse_args()
 
 

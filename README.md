@@ -10,7 +10,7 @@ Das Projekt untersucht, ob ein leichtgewichtiges Modell Lebensmittelbilder zuver
 - Output: `edible` oder `non_edible`
 - Modell: MobileNetV2 Transfer Learning mit Sigmoid-Output
 - Aufgabe: binäre Bildklassifikation
-- Demo-Modell: `models/updated_raw_standard.keras`
+- Demo-Modell: `models/freshify_final.keras`
 - Empfohlener Demo-Threshold: `0.35`
 
 Unterstützte Lebensmittelkategorien im Datensatz:
@@ -42,15 +42,17 @@ Dadurch ist das Modell Teil eines Human-in-the-loop-Prozesses. Ein niedrigerer T
 
 Der reguläre Validation Split `data/val/` enthält beide Klassen (`edible` und `non_edible`). Deshalb können hier vollständige Metriken wie Accuracy, Precision, Recall und Confusion Matrix berichtet werden.
 
-Auf diesem Validation Split war die klassische Baseline ohne Online-Augmentation am stärksten:
+Für den finalen Vergleich behalten wir drei Modellartefakte. Das finale Demo-Modell ist nicht automatisch das Modell mit der höchsten Validation Accuracy, sondern das Modell, das im aktuellen Streamlit-/Demo-Setup und auf den neuen Smartphonebildern am besten zum Use Case passt.
 
-| Modell | Augmentation | Accuracy | Precision `non_edible` | Recall `non_edible` | FN | FP |
-|---|---|---:|---:|---:|---:|---:|
-| `rerun_baseline` | keine | `0.8387` | `0.8750` | `0.7500` | `7` | `3` |
-| `rerun_standard` | Standard | `0.8065` | `0.8333` | `0.7143` | `8` | `4` |
-| `rerun_background` | Background | `0.8226` | `0.8696` | `0.7143` | `8` | `3` |
+| Modell | Variante | Validation Accuracy | Precision `non_edible` | Recall `non_edible` | Real-World-Check `data/new_raw` |
+|---|---|---:|---:|---:|---:|
+| `freshify_final.keras` | finales Demo-Modell | `0.7581` | `0.6757` | `0.8929` | `12/14` |
+| `freshify_standard_augmentation.keras` | Standard-Augmentation | `0.8065` | `0.7500` | `0.8571` | `6/14` |
+| `freshify_background_augmentation.keras` | Background-Augmentation | `0.8548` | `0.8065` | `0.8929` | `7/14` |
 
-Interpretation: Die Baseline ist auf dem festen Validation Split am stärksten. Die Augmentationen sind trotzdem relevant, weil sie die Robustheit gegenüber echten Smartphonebildern verbessern können.
+Die Tabelle nutzt den aktuellen Business-Threshold `0.35`, weil dieser auch für die Demo verwendet wird.
+
+Interpretation: Background-Augmentation liefert in diesem Lauf das beste Validation-Ergebnis. Für die neuen Smartphonebilder ist aber das finale Demo-Modell deutlich stärker. Das zeigt den Domain-Gap zwischen Validation Split und realistischeren Smartphonebildern: Ein Modell kann auf `data/val/` besser aussehen, aber auf neuen Bildern schlechter generalisieren.
 
 ### Real-World-Holdout
 
@@ -58,16 +60,22 @@ Zusätzlich wurden 14 neue `non_edible` Smartphonebilder in `data/new_raw/` als 
 
 | Modell | Threshold | Erkannte `non_edible` Bilder | Recall `non_edible` | False Negatives |
 |---|---:|---:|---:|---:|
-| `rerun_baseline` | `0.50` | `6/14` | `0.4286` | `8` |
-| `rerun_baseline` | `0.35` | `8/14` | `0.5714` | `6` |
-| `rerun_standard` | `0.35` | `6/14` | `0.4286` | `8` |
-| `rerun_background` | `0.35` | `7/14` | `0.5000` | `7` |
-| `updated_raw_standard` | `0.50` | `7/14` | `0.5000` | `7` |
-| `updated_raw_standard` | `0.35` | `12/14` | `0.8571` | `2` |
+| `freshify_final.keras` | `0.35` | `12/14` | `0.8571` | `2` |
+| `freshify_standard_augmentation.keras` | `0.35` | `6/14` | `0.4286` | `8` |
+| `freshify_background_augmentation.keras` | `0.35` | `7/14` | `0.5000` | `7` |
 
-Für die Demo wird deshalb `models/updated_raw_standard.keras` mit Threshold `0.35` empfohlen.
+Für die Demo wird deshalb `models/freshify_final.keras` mit Threshold `0.35` empfohlen.
 
 Wichtig: Das reguläre `data/val/` testet beide Klassen und liefert vollständige Validation-Metriken. Das zusätzliche Real-World-Holdout `data/new_raw/` enthält aktuell nur neue `non_edible` Smartphonebilder. Deshalb ist `12/14 = 85.7%` hier kein vollständiger Real-World-Accuracy-Wert, sondern der Recall bzw. die Detection Rate für die kritische Klasse auf neuen Smartphonebildern.
+
+## Abbildungen
+
+Für README und Präsentation sind zwei Abbildungen sinnvoll:
+
+1. Business-Workflow: Kamera oder Bildaufnahme -> optional Object Detection/Crop -> Freshify Classifier -> Markierung auffälliger Fälle -> Human Review
+2. Modell-Pipeline: Bild -> Resize auf `224 x 224` -> MobileNetV2 Backbone -> Klassifikationskopf -> `edible` oder `non_edible`
+
+Die Bilddateien sollten erst eingebunden werden, wenn sie im Repository liegen, zum Beispiel unter `docs/images/`. Dadurch zeigt GitHub keine kaputten Bildlinks an.
 
 ## Get Started
 
@@ -94,7 +102,7 @@ pip install -r requirements.txt
 ```bash
 PYTHONPATH=src ./venv/bin/python src/predict.py \
   data/val/non_edible/orange_non_edible_21b002f6319f.png \
-  --model-path models/updated_raw_standard.keras \
+  --model-path models/freshify_final.keras \
   --threshold 0.35
 ```
 
@@ -108,11 +116,11 @@ Die Ausgabe enthält:
 
 ```bash
 PYTHONPATH=src ./venv/bin/python src/evaluate.py \
-  --model-path models/updated_raw_standard.keras \
+  --model-path models/freshify_final.keras \
   --image-dir data/new_raw \
   --true-label non_edible \
   --threshold 0.35 \
-  --report-dir reports/real_world_new_raw/updated_raw_standard_t035
+  --report-dir reports/real_world_new_raw/freshify_final_t035
 ```
 
 Erwartetes Ergebnis:
@@ -130,12 +138,12 @@ Die Evaluation schreibt:
 
 ```bash
 PYTHONPATH=src ./venv/bin/python src/evaluate.py \
-  --model-path models/rerun_baseline.keras \
-  --threshold 0.5 \
-  --report-dir reports/rerun_baseline
+  --model-path models/freshify_final.keras \
+  --threshold 0.35 \
+  --report-dir reports/freshify_final
 ```
 
-Dieser Lauf reproduziert die dokumentierte Baseline-Evaluation auf `data/val`.
+Dieser Lauf reproduziert die dokumentierte Evaluation des finalen Demo-Modells auf `data/val`.
 
 ### 5. Streamlit UI
 
@@ -185,7 +193,20 @@ food_freshness/
 
 ## Datensatz
 
-Rohdaten:
+Die Daten stammen aus einer Kombination aus öffentlichem Kaggle-Datensatz und eigenen Smartphonebildern.
+
+Kaggle-Datensatz:
+
+```text
+https://www.kaggle.com/datasets/ulnnproject/food-freshness-dataset
+```
+
+Eigene Bilder:
+
+- zusätzliche Smartphonebilder, um das Modell näher an realistischere Testbedingungen zu bringen
+- `data/new_raw/` enthält aktuell 14 neue `non_edible` Smartphonebilder als separaten Real-World-Check
+
+Rohdaten im Projekt:
 
 - `dataset_cat1/` enthält `edible` Bilder
 - `dataset_cat2/` enthält `non_edible` Bilder
@@ -205,7 +226,34 @@ data/
 
 `data/new_raw/` enthält neue Smartphonebilder, die als Real-World-Holdout genutzt werden. Diese Bilder bleiben bewusst außerhalb des Trainings.
 
-## Training Und Experimente
+### Datenaufteilung
+
+Aktueller Stand des strukturierten Datensatzes:
+
+| Split | `edible` | `non_edible` | Gesamt |
+|---|---:|---:|---:|
+| `data/train` | 137 | 117 | 254 |
+| `data/val` | 34 | 28 | 62 |
+| `data/new_raw` | 0 | 14 | 14 |
+
+`data/train` und `data/val` bilden den regulären Datensatz mit beiden Klassen. `data/new_raw` ist kein vollständiger Testdatensatz, sondern ein zusätzlicher Real-World-Check für die kritische Klasse `non_edible`.
+
+### Kategorienverteilung
+
+Die aktuelle Verteilung nach Lebensmittelkategorie ist nicht vollständig balanciert:
+
+| Kategorie | `edible` | `non_edible` | Gesamt |
+|---|---:|---:|---:|
+| Banane | 45 | 39 | 84 |
+| Paprika | 26 | 45 | 71 |
+| Orange | 31 | 23 | 54 |
+| Gurke | 30 | 12 | 42 |
+| Erdbeere | 27 | 13 | 40 |
+| Zitrone | 12 | 13 | 25 |
+
+Banane und Paprika sind am stärksten vertreten. Zitrone ist die kleinste Kategorie. Besonders bei `non_edible` sind Gurke, Erdbeere und Zitrone relativ schwach vertreten. Deshalb sollten die Ergebnisse nicht als gleich starke Aussage für jede einzelne Lebensmittelart interpretiert werden, sondern als Gesamtbewertung des binären Klassifikators.
+
+## Training und Experimente
 
 ### Datensatz neu aufbauen
 
@@ -213,14 +261,14 @@ data/
 PYTHONPATH=src ./venv/bin/python src/data.py --remove-loose-root-files
 ```
 
-### Baseline trainieren
+### Modell ohne Augmentation trainieren
 
 ```bash
 PYTHONPATH=src ./venv/bin/python src/train.py \
   --epochs 10 \
   --augmentation none \
-  --experiment-name rerun_baseline \
-  --model-path models/rerun_baseline.keras
+  --experiment-name freshify_final \
+  --model-path models/freshify_final.keras
 ```
 
 ### Standard-Augmentation trainieren
@@ -229,8 +277,8 @@ PYTHONPATH=src ./venv/bin/python src/train.py \
 PYTHONPATH=src ./venv/bin/python src/train.py \
   --epochs 10 \
   --augmentation standard \
-  --experiment-name rerun_standard \
-  --model-path models/rerun_standard.keras
+  --experiment-name freshify_standard_augmentation \
+  --model-path models/freshify_standard_augmentation.keras
 ```
 
 ### Background-Augmentation trainieren
@@ -239,8 +287,8 @@ PYTHONPATH=src ./venv/bin/python src/train.py \
 PYTHONPATH=src ./venv/bin/python src/train.py \
   --epochs 10 \
   --augmentation background \
-  --experiment-name rerun_background \
-  --model-path models/rerun_background.keras
+  --experiment-name freshify_background_augmentation \
+  --model-path models/freshify_background_augmentation.keras
 ```
 
 ### Background-Augmentation neu erzeugen
@@ -261,23 +309,19 @@ Standard-Augmentation umfasst leichte Bildvariationen wie Flip, Rotation, Zoom u
 
 Die Ergebnisse zeigen: Background-Augmentation ist ein sinnvolles Experiment zur Untersuchung von Background Bias, war in diesem Projekt aber nicht das stärkste finale Setup. Für die Präsentation ist diese Erkenntnis wichtig: echte Smartphonebilder sind für die Robustheit wertvoller als unbalancierte synthetische Hintergründe.
 
-## Modell- Und Report-Artefakte
+## Modell- und Report-Artefakte
 
 Behaltene Modellkandidaten:
 
-- `models/rerun_baseline.keras`
-- `models/rerun_standard.keras`
-- `models/rerun_background.keras`
-- `models/updated_raw_standard.keras`
+- `models/freshify_final.keras`
+- `models/freshify_standard_augmentation.keras`
+- `models/freshify_background_augmentation.keras`
 
-Behaltene Reports:
+Reports:
 
-- `reports/rerun_baseline/`
-- `reports/rerun_standard/`
-- `reports/rerun_background/`
-- `reports/updated_raw_standard/`
-- `reports/real_world_new_raw/`
-- `reports/dataset_manifest.csv`
+- `reports/dataset_manifest.csv` dokumentiert den aktuellen Train/Validation-Datensatz.
+- `reports/real_world_new_raw/` enthält Real-World-Auswertungen auf den neuen Smartphonebildern.
+- Weitere Report-Ordner sind historische Experimentausgaben. Neue Reports können über die Commands im Abschnitt `Get Started` mit den aktuellen Modellnamen erzeugt werden.
 
 ## Wichtige Code-Dateien
 
@@ -301,6 +345,6 @@ Behaltene Reports:
 
 ## Präsentations-Kernaussage
 
-Wir haben ein verständliches binäres Klassifikationsmodell für Lebensmittel-Frische gebaut. Auf dem klassischen Validation Split erreicht die Baseline eine Accuracy von `83.87%`. Für echte Smartphonebilder ist ein Standard-Augmentation-Modell mit konservativerem Threshold robuster: Es erkennt `12/14` neue `non_edible` Bilder korrekt, also `85.7%` Recall für die kritische Klasse.
+Wir haben ein verständliches binäres Klassifikationsmodell für Lebensmittel-Frische gebaut. Im Modellvergleich erreicht Background-Augmentation auf dem Validation Split die stärkste Accuracy von `85.48%`. Für echte Smartphonebilder ist jedoch das finale Demo-Modell robuster: Es erkennt `12/14` neue `non_edible` Bilder korrekt, also `85.7%` Recall für die kritische Klasse.
 
 Das Modell ist als Assistenzsystem gedacht: Es markiert Verdachtsfälle, die anschließend von Menschen überprüft werden. Damit passt der recall-orientierte Threshold zum Business Use Case, ohne die menschliche Finalprüfung zu ersetzen.
