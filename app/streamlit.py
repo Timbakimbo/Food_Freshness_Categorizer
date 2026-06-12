@@ -9,7 +9,6 @@ import io
 import json
 import sys
 import time
-import uuid
 from datetime import datetime
 from html import escape
 from pathlib import Path
@@ -21,8 +20,7 @@ from PIL import Image, ImageDraw, ImageFont
 
 APP_VERSION = "0.2.0"
 ROOT = Path(__file__).resolve().parent
-PROJECT_ROOT = ROOT.parent
-sys.path.insert(0, str(PROJECT_ROOT))
+sys.path.insert(0, str(ROOT))
 
 SUPPORTED_ITEMS = [
     ("🍌", "Bananen"),
@@ -32,19 +30,6 @@ SUPPORTED_ITEMS = [
     ("🫑", "Paprika"),
     ("🍋", "Zitronen"),
 ]
-ORG_STEPS = ["Wareneingang", "Vorsortierung", "Ausgabeplanung", "Dokumentation"]
-FOOD_CATEGORIES = [
-    "Obst",
-    "Gemüse",
-    "Mischkiste",
-    "Backwaren",
-    "Milchprodukte",
-    "Tiefkühlware",
-    "Konserven",
-    "Sonstiges",
-]
-
-
 st.set_page_config(
     page_title=f"Freshify · v{APP_VERSION}",
     page_icon="🥦",
@@ -62,7 +47,7 @@ st.markdown(
     --ink: #0b1710;
     --muted: #53645a;
     --subtle: #829188;
-    --canvas: #f5f8f6;
+    --canvas: #f1f5f3;
     --surface: #ffffff;
     --surface-soft: #f0f5f2;
     --border: #dce7e0;
@@ -87,7 +72,12 @@ html, body, [class*="css"] {
 }
 body { background: var(--canvas); }
 #MainMenu, footer, header { visibility: hidden; }
-[data-testid="stAppViewContainer"] { background: var(--canvas); }
+[data-testid="stAppViewContainer"] {
+    background:
+        radial-gradient(circle at 8% 8%, rgba(0,169,98,.045), transparent 26rem),
+        radial-gradient(circle at 92% 24%, rgba(65,113,89,.04), transparent 30rem),
+        var(--canvas);
+}
 .block-container {
     max-width: 1320px !important;
     padding: 0 2.4rem 5rem !important;
@@ -148,15 +138,16 @@ body { background: var(--canvas); }
 }
 
 .f-proto {
-    margin: 1rem 0 0;
+    margin: 0;
     display: flex;
+    justify-content: center;
     align-items: center;
-    gap: .5rem;
+    gap: .62rem;
     flex-wrap: wrap;
 }
 .f-proto-label {
     color: var(--muted);
-    font-size: .72rem;
+    font-size: .78rem;
     font-weight: 700;
     letter-spacing: .05em;
     text-transform: uppercase;
@@ -165,13 +156,66 @@ body { background: var(--canvas); }
     display: inline-flex;
     align-items: center;
     gap: .25rem;
-    padding: .25rem .58rem;
+    padding: .34rem .72rem;
     border: 1px solid var(--border);
     border-radius: 999px;
     background: rgba(255,255,255,.7);
     color: var(--muted);
-    font-size: .7rem;
+    font-size: .77rem;
     font-weight: 600;
+    box-shadow: 0 2px 7px rgba(8,24,15,.04);
+}
+.f-nav-controls { height: 1rem; }
+.f-nav-center { max-width: 780px; margin: 0 auto; }
+.st-key-sticky_navigation {
+    position: relative;
+    width: calc(100% + 4.8rem) !important;
+    max-width: none !important;
+    margin: 0 -2.4rem;
+    padding: .72rem 2.4rem .78rem;
+    border-bottom: 1px solid rgba(116, 171, 141, .22);
+    background: rgba(11, 31, 21, .88);
+    box-shadow: 0 10px 30px rgba(8, 24, 15, .12);
+    backdrop-filter: blur(16px) saturate(140%);
+    -webkit-backdrop-filter: blur(16px) saturate(140%);
+}
+div[data-testid="stLayoutWrapper"]:has(> .st-key-sticky_navigation) {
+    position: sticky;
+    top: 0;
+    z-index: 500;
+}
+.st-key-sticky_navigation .f-proto-label { color: #a8bcb0; }
+.st-key-sticky_navigation .f-chip {
+    border-color: rgba(137, 196, 164, .18);
+    background: rgba(255,255,255,.055);
+    color: #dce8e1;
+    box-shadow: none;
+}
+.st-key-sticky_navigation [data-testid="stHorizontalBlock"] {
+    max-width: 780px;
+    margin: .6rem auto 0;
+}
+.st-key-sticky_navigation .stButton > button {
+    min-height: 28px !important;
+    padding: 0 .8rem !important;
+    border: 1px solid transparent !important;
+    border-radius: 9px !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    color: #d8e5dd !important;
+    font-size: .78rem !important;
+    letter-spacing: .01em;
+}
+.st-key-sticky_navigation .stButton > button:hover {
+    transform: none !important;
+    color: white !important;
+    background: rgba(255,255,255,.06) !important;
+    border-color: rgba(255,255,255,.08) !important;
+}
+.st-key-sticky_navigation .stButton > button[kind="primary"] {
+    color: #62e3a4 !important;
+    background: rgba(0,0,0,.24) !important;
+    border-color: rgba(98,227,164,.12) !important;
 }
 
 .f-hero {
@@ -194,9 +238,13 @@ body { background: var(--canvas); }
     max-width: 730px;
     color: var(--ink);
     font-size: clamp(2rem, 4vw, 3.25rem);
+    font-weight: 800;
     line-height: 1.02;
     letter-spacing: -.055em;
 }
+.f-title-linkless { display: block; }
+.stMarkdown h1 a, .stMarkdown h2 a, .stMarkdown h3 a,
+[data-testid="stHeaderActionElements"] { display: none !important; }
 .f-subtitle {
     max-width: 690px;
     margin: .9rem 0 0;
@@ -277,40 +325,14 @@ body { background: var(--canvas); }
 .f-panel-body { padding: 1.25rem; }
 
 [data-testid="stVerticalBlockBorderWrapper"] {
-    height: 100%;
-    overflow: hidden;
+    height: auto;
+    min-height: 100%;
+    overflow: visible;
     border-color: var(--border) !important;
     border-radius: var(--radius-lg) !important;
     background: var(--surface);
     box-shadow: var(--shadow-sm);
 }
-
-.f-empty {
-    min-height: 345px;
-    display: grid;
-    place-items: center;
-    padding: 2rem;
-    border: 1px dashed #c9d8cf;
-    border-radius: var(--radius-md);
-    background:
-        radial-gradient(circle at 50% 20%, rgba(0,169,98,.07), transparent 36%),
-        var(--surface-soft);
-    text-align: center;
-}
-.f-empty-icon {
-    width: 58px;
-    height: 58px;
-    margin: 0 auto .9rem;
-    display: grid;
-    place-items: center;
-    border-radius: 16px;
-    background: white;
-    border: 1px solid var(--border);
-    box-shadow: var(--shadow-sm);
-    font-size: 1.55rem;
-}
-.f-empty-title { color: var(--ink); font-size: .96rem; font-weight: 750; }
-.f-empty-copy { margin-top: .4rem; color: var(--muted); font-size: .8rem; line-height: 1.65; }
 
 .f-result {
     padding: 1rem;
@@ -379,6 +401,10 @@ body { background: var(--canvas); }
     text-transform: uppercase;
 }
 .f-notice {
+    width: 100%;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    margin-top: 1rem;
     padding: .85rem .95rem;
     border: 1px solid #ecd1a6;
     border-radius: var(--radius-sm);
@@ -387,6 +413,73 @@ body { background: var(--canvas); }
     font-size: .78rem;
     line-height: 1.55;
 }
+.f-safety-notice {
+    margin-top: 1.5rem;
+    display: flex;
+    align-items: flex-start;
+    gap: .2rem;
+}
+.f-safety-icon {
+    width: 22px;
+    height: 22px;
+    flex: 0 0 22px;
+    display: grid;
+    place-items: center;
+    border-radius: 7px;
+    background: #fff3dc;
+    font-weight: 800;
+}
+.f-safety-copy { min-width: 0; }
+.f-awaiting {
+    min-height: 270px;
+    display: grid;
+    place-items: center;
+    padding: 1.4rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background:
+        radial-gradient(circle at 50% 0, rgba(0,169,98,.08), transparent 52%),
+        linear-gradient(145deg, #fbfdfc, #f0f5f2);
+    text-align: center;
+}
+.f-awaiting-icon {
+    width: 42px;
+    height: 42px;
+    margin: 0 auto .7rem;
+    display: grid;
+    place-items: center;
+    border: 1px solid #b8d8c7;
+    border-radius: 12px;
+    background: white;
+    color: var(--green-dark);
+    font-size: 1rem;
+    box-shadow: var(--shadow-sm);
+    position: relative;
+    overflow: hidden;
+}
+.f-awaiting-icon::before {
+    content: "";
+    width: 16px;
+    height: 16px;
+    border: 2px solid #92c7aa;
+    border-radius: 5px;
+    animation: f-await-pulse 1.8s ease-in-out infinite;
+}
+.f-awaiting-icon::after {
+    content: "";
+    position: absolute;
+    left: 9px;
+    right: 9px;
+    top: 12px;
+    height: 2px;
+    background: var(--green);
+    box-shadow: 0 0 7px rgba(0,169,98,.6);
+    animation: f-await-scan 1.8s ease-in-out infinite;
+}
+@keyframes f-await-pulse { 0%,100% { transform:scale(.9); opacity:.65; } 50% { transform:scale(1.08); opacity:1; } }
+@keyframes f-await-scan { 0%,100% { top:12px; } 50% { top:28px; } }
+.f-awaiting-title { color: var(--ink); font-size: .84rem; font-weight: 750; }
+.f-awaiting-copy { margin-top: .3rem; color: var(--muted); font-size: .74rem; line-height: 1.55; }
 .f-demo {
     margin: 0 0 .8rem;
     padding: .7rem .85rem;
@@ -434,14 +527,18 @@ body { background: var(--canvas); }
 [data-testid="stHorizontalBlock"] { align-items: stretch; }
 [data-testid="column"] { min-width: 0; }
 [data-baseweb="tab-list"] {
-    gap: .2rem !important;
-    margin-bottom: .9rem;
-    padding: .22rem !important;
+    width: fit-content;
+    max-width: 100%;
+    gap: .25rem !important;
+    margin: .35rem auto 1rem;
+    padding: .28rem !important;
     border-radius: 10px;
     background: var(--surface-soft) !important;
+    border: 1px solid var(--border);
 }
 [data-baseweb="tab"] {
     min-height: 36px !important;
+    padding: 0 1.1rem !important;
     border-radius: 8px !important;
     color: var(--muted) !important;
     font-size: .8rem !important;
@@ -455,12 +552,86 @@ body { background: var(--canvas); }
 [data-baseweb="tab-highlight"], [data-baseweb="tab-border"] { display: none !important; }
 
 [data-testid="stFileUploader"] section {
+    min-height: 345px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 1rem !important;
+    padding: 2rem !important;
     border-color: var(--border) !important;
+    border-style: dashed !important;
     border-radius: var(--radius-md) !important;
-    background: var(--surface-soft) !important;
+    background:
+        radial-gradient(circle at 50% 32%, rgba(0,169,98,.09), transparent 29%),
+        var(--surface-soft) !important;
+    transition: border-color .18s ease, background .18s ease, transform .18s ease !important;
 }
-[data-testid="stFileUploader"] section:hover { border-color: var(--green) !important; }
+[data-testid="stFileUploader"] section:hover {
+    border-color: var(--green) !important;
+    background:
+        radial-gradient(circle at 50% 32%, rgba(0,169,98,.14), transparent 31%),
+        #f3faf6 !important;
+}
+[data-testid="stFileUploader"] section > div {
+    width: 100%;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: .75rem !important;
+    text-align: center !important;
+}
+[data-testid="stFileUploaderDropzoneInstructions"] {
+    align-items: center !important;
+    text-align: center !important;
+}
+[data-testid="stFileUploaderDropzoneInstructions"] > div {
+    align-items: center !important;
+}
+[data-testid="stFileUploaderDropzoneInstructions"] span {
+    color: var(--ink) !important;
+    font-size: .92rem !important;
+    font-weight: 750 !important;
+}
+[data-testid="stFileUploaderDropzoneInstructions"] small {
+    color: var(--muted) !important;
+    font-size: .75rem !important;
+}
+[data-testid="stFileUploader"] section button {
+    min-width: 180px !important;
+    min-height: 44px !important;
+    border: 0 !important;
+    border-radius: 10px !important;
+    background: var(--ink) !important;
+    color: white !important;
+    font-weight: 700 !important;
+    box-shadow: 0 8px 20px rgba(11,23,16,.15) !important;
+}
+[data-testid="stCameraInput"] {
+    min-height: 345px;
+    padding: 2rem;
+    display: grid;
+    place-items: center;
+    border: 1px dashed var(--border);
+    border-radius: var(--radius-md);
+    background: var(--surface-soft);
+}
 [data-testid="stImage"] img { border-radius: var(--radius-md); }
+.f-uploaded-frame [data-testid="stImage"] {
+    min-height: 345px;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--surface-soft);
+}
+.f-uploaded-frame [data-testid="stImage"] img {
+    width: 100%;
+    height: 345px;
+    object-fit: contain;
+}
 [data-testid="stTextInput"] label,
 [data-testid="stNumberInput"] label,
 [data-testid="stTextArea"] label,
@@ -506,14 +677,895 @@ input:focus, textarea:focus {
     border-radius: var(--radius-sm) !important;
 }
 
+/* Animated product stories */
+.f-stories { margin-top: 1rem; }
+.f-story {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(250px, .85fr);
+    gap: 1.2rem;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding: 1.3rem;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: linear-gradient(145deg, #fff, #f1f7f3);
+    box-shadow: var(--shadow-sm);
+}
+.f-story-copy h3 { margin: 0 0 .55rem; color: var(--ink); font-size: 1.02rem; }
+.f-story-copy p { margin: 0; color: var(--muted); font-size: .84rem; line-height: 1.7; }
+.f-story-kicker {
+    margin-bottom: .4rem;
+    color: var(--green-dark);
+    font-size: .64rem;
+    font-weight: 800;
+    letter-spacing: .09em;
+    text-transform: uppercase;
+}
+.f-scene {
+    position: relative;
+    min-height: 250px;
+    overflow: hidden;
+    border: 1px solid #cfe0d6;
+    border-radius: 14px;
+    background: linear-gradient(180deg, #dff3e8 0 62%, #c7d8ce 62% 65%, #edf2ef 65%);
+}
+.f-person {
+    position: absolute;
+    left: 13%;
+    bottom: 32px;
+    width: 78px;
+    height: 128px;
+}
+.f-head {
+    position: absolute;
+    top: 0;
+    left: 23px;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: #d99b72;
+    box-shadow: inset -8px 7px 0 #263b31;
+}
+.f-body {
+    position: absolute;
+    left: 13px;
+    bottom: 0;
+    width: 55px;
+    height: 92px;
+    border-radius: 22px 22px 8px 8px;
+    background: #173d2a;
+}
+.f-arm {
+    position: absolute;
+    top: 52px;
+    left: 48px;
+    width: 65px;
+    height: 13px;
+    border-radius: 10px;
+    background: #d99b72;
+    transform: rotate(-8deg);
+    transform-origin: left center;
+}
+.f-tablet {
+    position: absolute;
+    top: 78px;
+    left: 31%;
+    z-index: 8;
+    width: 76px;
+    height: 104px;
+    padding: 7px;
+    border: 2px solid #31483d;
+    border-radius: 10px;
+    background: #102219;
+    transform: rotate(3deg);
+    box-shadow: 0 8px 18px rgba(11,23,16,.22);
+    animation: f-tablet-focus 3s ease-in-out infinite;
+}
+.f-tablet-screen {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    border-radius: 4px;
+    border: 1px solid rgba(255,255,255,.48);
+    position: relative;
+    background:
+        radial-gradient(circle at 30% 65%, #f29a27 0 9px, transparent 10px),
+        radial-gradient(circle at 68% 42%, #765035 0 9px, transparent 10px),
+        radial-gradient(circle at 70% 72%, #7daf49 0 9px, transparent 10px),
+        #c9eedb;
+}
+.f-tablet-screen::before,
+.f-tablet-screen::after {
+    content: "";
+    position: absolute;
+    border: 2px solid var(--green);
+    border-radius: 3px;
+}
+.f-tablet-screen::before { left: 7px; top: 48px; width: 23px; height: 23px; }
+.f-tablet-screen::after { right: 5px; top: 22px; width: 24px; height: 24px; border-color: var(--red); }
+.f-tablet-good-box {
+    position: absolute;
+    left: 31px;
+    bottom: 16px;
+    width: 24px;
+    height: 24px;
+    border: 2px solid var(--green);
+    border-radius: 3px;
+}
+.f-tablet-line {
+    position: absolute;
+    left: 8px;
+    right: 8px;
+    top: 10px;
+    height: 2px;
+    background: #00d47a;
+    box-shadow: 0 0 8px #00d47a;
+    animation: f-mini-scan 2s ease-in-out infinite;
+}
+.f-crate {
+    position: absolute;
+    right: 10%;
+    bottom: 35px;
+    width: 145px;
+    height: 78px;
+    border: 7px solid #936331;
+    border-top-width: 10px;
+    border-radius: 5px;
+    background: repeating-linear-gradient(0deg, #bc8247 0 12px, #9d6937 12px 17px);
+}
+.f-fruit {
+    position: absolute;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #f39b24;
+    box-shadow: inset -5px -4px 0 rgba(126,55,5,.16);
+}
+.f-fruit::after {
+    content: "";
+    position: absolute;
+    top: -5px;
+    left: 13px;
+    width: 4px;
+    height: 8px;
+    border-radius: 4px;
+    background: #2f743d;
+    transform: rotate(28deg);
+}
+.f-f1 { left: 10px; top: -22px; }
+.f-f2 { left: 48px; top: -30px; background: #e54e3f; }
+.f-f3 { left: 86px; top: -19px; background: #f4b42b; }
+.f-f4 { left: 32px; top: 5px; background: #84b84a; }
+.f-f5 { left: 75px; top: 3px; background: #eb6845; }
+.f-fruit.bad {
+    background: #765035 !important;
+    box-shadow:
+        inset -7px -6px 0 rgba(45,25,13,.23),
+        inset 5px 4px 0 rgba(177,128,82,.24);
+}
+.f-fruit.bad::before {
+    content: "";
+    position: absolute;
+    inset: 5px 7px 8px 4px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #3f2b20 0 2px, transparent 3px);
+}
+.f-help-pill {
+    position: absolute;
+    right: 8%;
+    top: 22px;
+    padding: .45rem .65rem;
+    border: 1px solid #e5aaa5;
+    border-radius: 9px;
+    background: rgba(255,255,255,.92);
+    color: var(--red);
+    font-size: .66rem;
+    font-weight: 800;
+    box-shadow: var(--shadow-sm);
+    animation: f-fade-result 3s ease-in-out infinite;
+}
+
+.f-belt-scene { background: linear-gradient(180deg, #e7f2ec 0 64%, #d7dfda 64%); }
+.f-belt {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 47px;
+    height: 44px;
+    border-top: 7px solid #263c32;
+    border-bottom: 7px solid #263c32;
+    background: repeating-linear-gradient(90deg, #809087 0 30px, #a7b3ac 30px 36px);
+}
+.f-moving-crate {
+    right: auto;
+    left: 10%;
+    bottom: 88px;
+    transform: scale(.74);
+    transform-origin: bottom left;
+    animation: f-belt-move 6s linear infinite;
+}
+.f-camera-rig {
+    position: absolute;
+    left: 42%;
+    top: 10px;
+    width: 8px;
+    height: 76px;
+    background: #263c32;
+}
+.f-camera-rig::after {
+    content: "";
+    position: absolute;
+    left: -22px;
+    bottom: -19px;
+    width: 52px;
+    height: 31px;
+    border-radius: 7px;
+    background: #102219;
+    box-shadow: inset 0 -5px 0 rgba(255,255,255,.08);
+}
+.f-lens {
+    position: absolute;
+    left: calc(42% - 1px);
+    top: 74px;
+    z-index: 2;
+    width: 11px;
+    height: 11px;
+    border: 2px solid #62e8a7;
+    border-radius: 50%;
+    background: #07110c;
+}
+.f-scan-beam {
+    position: absolute;
+    left: 33%;
+    top: 91px;
+    width: 20%;
+    height: 105px;
+    clip-path: polygon(43% 0, 57% 0, 100% 100%, 0 100%);
+    background: linear-gradient(180deg, rgba(0,212,122,.28), rgba(0,212,122,.03));
+    animation: f-beam 1.5s ease-in-out infinite;
+}
+.f-alert-person {
+    left: auto;
+    right: 4%;
+    bottom: 24px;
+    transform: scale(.63);
+    transform-origin: bottom right;
+}
+.f-phone {
+    position: absolute;
+    right: 15%;
+    top: 24px;
+    width: 118px;
+    min-height: 136px;
+    padding: .55rem;
+    border: 5px solid #102219;
+    border-radius: 12px;
+    background: white;
+    color: var(--ink);
+    box-shadow: 0 12px 25px rgba(8,24,15,.2);
+    animation: f-notification 6s ease-in-out infinite;
+}
+.f-phone-title { font-size: .58rem; font-weight: 800; text-transform: uppercase; color: var(--subtle); }
+.f-phone-row { margin-top: .35rem; display: flex; justify-content: space-between; font-size: .62rem; font-weight: 750; }
+.f-phone-row.good strong { color: var(--green-dark); }
+.f-phone-row.bad strong { color: var(--red); }
+.f-result-photo {
+    position: relative;
+    height: 57px;
+    margin-top: .45rem;
+    overflow: hidden;
+    border-radius: 6px;
+    background:
+        radial-gradient(circle at 20% 36%, #f19b28 0 8px, transparent 9px),
+        radial-gradient(circle at 48% 62%, #80b04b 0 8px, transparent 9px),
+        radial-gradient(circle at 76% 34%, #765035 0 8px, transparent 9px),
+        radial-gradient(circle at 80% 76%, #765035 0 8px, transparent 9px),
+        #d7eadf;
+}
+.f-result-photo span {
+    position: absolute;
+    width: 22px;
+    height: 22px;
+    border: 2px solid var(--green);
+    border-radius: 3px;
+}
+.f-rp1 { left: 8px; top: 7px; }
+.f-rp2 { left: 38px; top: 27px; }
+.f-rp3 { right: 9px; top: 6px; border-color: var(--red) !important; }
+.f-rp4 { right: 7px; bottom: 3px; border-color: var(--red) !important; }
+.f-bad-box {
+    position: absolute;
+    left: 36%;
+    bottom: 114px;
+    width: 28px;
+    height: 28px;
+    border: 2px solid var(--red);
+    border-radius: 4px;
+    opacity: 0;
+    animation: f-detect-box 6s linear infinite;
+}
+@keyframes f-tablet-focus {
+    0%, 100% { transform: rotate(3deg) translateY(0); }
+    50% { transform: rotate(1deg) translateY(-4px); }
+}
+@keyframes f-mini-scan { 0%, 100% { top: 10px; } 50% { top: 58px; } }
+@keyframes f-fade-result { 0%, 20% { opacity: 0; transform: translateY(5px); } 45%, 85% { opacity: 1; transform: none; } 100% { opacity: 0; } }
+@keyframes f-belt-move { 0% { left: -20%; } 100% { left: 55%; } }
+@keyframes f-beam { 0%, 100% { opacity: .4; } 50% { opacity: 1; } }
+@keyframes f-notification { 0%, 48% { opacity: 0; transform: translateY(8px); } 58%, 92% { opacity: 1; transform: none; } 100% { opacity: 0; } }
+@keyframes f-detect-box { 0%, 42% { opacity: 0; left: 20%; } 48%, 58% { opacity: 1; left: 40%; } 68%, 100% { opacity: 0; left: 62%; } }
+
+/* ML pipeline */
+.f-ml-viz {
+    position: relative;
+    margin: 1rem 0;
+    padding: 1.3rem;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: linear-gradient(145deg, #0d1e15, #153326);
+    box-shadow: var(--shadow-lg);
+}
+.f-ml-viz-head { color: white; font-size: .98rem; font-weight: 750; }
+.f-ml-viz-copy { margin-top: .3rem; color: #a4b9ad; font-size: .79rem; line-height: 1.55; }
+.f-pipeline {
+    position: relative;
+    margin-top: 1.2rem;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: .7rem;
+}
+.f-pipeline::before {
+    content: "";
+    position: absolute;
+    left: 9%;
+    right: 9%;
+    top: 31px;
+    height: 2px;
+    background: #315544;
+}
+.f-pipe-node {
+    position: relative;
+    z-index: 2;
+    min-height: 96px;
+    padding: .75rem .55rem;
+    border: 1px solid #315544;
+    border-radius: 11px;
+    background: #13281d;
+    color: white;
+    text-align: center;
+}
+.f-pipe-icon {
+    width: 38px;
+    height: 38px;
+    margin: 0 auto .45rem;
+    display: grid;
+    place-items: center;
+    border: 1px solid #397259;
+    border-radius: 10px;
+    background: #193b2a;
+    color: #58e39b;
+    font-size: 1rem;
+}
+.f-pipe-visual {
+    position: relative;
+    width: 38px;
+    height: 38px;
+    margin: 0 auto .45rem;
+    overflow: hidden;
+    border: 1px solid #397259;
+    border-radius: 10px;
+    background: #193b2a;
+}
+.f-yolo-visual::before,
+.f-yolo-visual::after {
+    content: "";
+    position: absolute;
+    border: 1.5px solid #58e39b;
+    animation: f-box-pop 2s ease-in-out infinite;
+}
+.f-yolo-visual::before { inset: 7px 16px 14px 5px; }
+.f-yolo-visual::after { inset: 16px 5px 5px 18px; animation-delay: .35s; }
+.f-input-visual::before {
+    content: "";
+    position: absolute;
+    left: 6px;
+    right: 6px;
+    top: 8px;
+    bottom: 7px;
+    border: 1.5px solid #58e39b;
+    border-radius: 4px;
+}
+.f-input-visual::after {
+    content: "";
+    position: absolute;
+    left: 10px;
+    bottom: 10px;
+    width: 18px;
+    height: 12px;
+    clip-path: polygon(0 100%, 36% 42%, 55% 70%, 72% 48%, 100% 100%);
+    background: #58e39b;
+}
+.f-input-visual span {
+    position: absolute;
+    right: 9px;
+    top: 11px;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #a7e9c8;
+}
+.f-crop-visual::before {
+    content: "";
+    position: absolute;
+    inset: 9px;
+    border: 2px solid #58e39b;
+    animation: f-crop-zoom 2s ease-in-out infinite;
+}
+.f-cnn-visual {
+    background:
+        radial-gradient(circle at 8px 9px, #58e39b 0 2px, transparent 3px),
+        radial-gradient(circle at 19px 8px, #58e39b 0 2px, transparent 3px),
+        radial-gradient(circle at 30px 10px, #58e39b 0 2px, transparent 3px),
+        radial-gradient(circle at 12px 25px, #8bbda1 0 2px, transparent 3px),
+        radial-gradient(circle at 26px 26px, #8bbda1 0 2px, transparent 3px),
+        #193b2a;
+    animation: f-neural-pulse 1.8s ease-in-out infinite;
+}
+.f-overlay-visual::before,
+.f-overlay-visual::after {
+    content: "";
+    position: absolute;
+    width: 13px;
+    height: 13px;
+    border: 2px solid #58e39b;
+    border-radius: 2px;
+}
+.f-overlay-visual::before { left: 5px; top: 9px; }
+.f-overlay-visual::after { right: 5px; bottom: 7px; border-color: #ef746b; }
+@keyframes f-box-pop { 0%,100% { opacity:.35; transform:scale(.85); } 50% { opacity:1; transform:scale(1); } }
+@keyframes f-crop-zoom { 0%,100% { inset:12px; } 50% { inset:5px; } }
+@keyframes f-neural-pulse { 0%,100% { filter:brightness(.85); } 50% { filter:brightness(1.45); } }
+.f-pipe-title { font-size: .7rem; font-weight: 750; }
+.f-pipe-sub { margin-top: .18rem; color: #829c8e; font-size: .58rem; line-height: 1.35; }
+.f-data-pulse {
+    position: absolute;
+    z-index: 4;
+    top: 27px;
+    left: 8%;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #58e39b;
+    box-shadow: 0 0 15px #58e39b;
+    animation: f-data-travel 4s ease-in-out infinite;
+}
+@keyframes f-data-travel { 0% { left: 8%; } 100% { left: 91%; } }
+
+/* P-Team */
+.f-team-scene {
+    position: relative;
+    min-height: 350px;
+    margin-bottom: 1rem;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background:
+        radial-gradient(circle at 78% 20%, rgba(255,255,255,.48), transparent 25%),
+        linear-gradient(180deg, #e3f1e9 0 69%, #bdd0c5 69% 71%, #eef3f0 71%);
+    box-shadow: var(--shadow-sm);
+}
+.f-team-label {
+    position: absolute;
+    left: 24px;
+    top: 20px;
+    color: var(--green-dark);
+    font-size: .68rem;
+    font-weight: 800;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+}
+.f-student {
+    position: absolute;
+    bottom: 0;
+    width: 126px;
+    height: 224px;
+}
+.f-student .f-head {
+    z-index: 2;
+    top: 18px;
+    left: 41px;
+    width: 45px;
+    height: 49px;
+    border-radius: 48% 48% 45% 45%;
+    box-shadow: none;
+}
+.f-student .f-body {
+    z-index: 1;
+    left: 19px;
+    top: 75px;
+    bottom: auto;
+    width: 88px;
+    height: 154px;
+    border-radius: 40px 40px 16px 16px;
+    box-shadow: inset 0 -10px 0 rgba(0,0,0,.06);
+}
+.f-student-cap { left: 28%; transform:rotate(-1deg); }
+.f-student-bun { left: 45%; transform:rotate(1deg); }
+.f-student-wave { left: 62%; transform:rotate(-1deg); }
+.f-team-arm {
+    position: absolute;
+    z-index: 3;
+    top: 93px;
+    width: 66px;
+    height: 16px;
+    border-radius: 999px;
+    background: #d99b72;
+    transform-origin: 8px center;
+}
+.f-arm-tablet {
+    right: -7px;
+    top: 96px;
+    width: 59px;
+    transform: rotate(15deg);
+}
+.f-cap {
+    position: absolute;
+    z-index: 3;
+    top: 14px;
+    left: 34px;
+    width: 61px;
+    height: 25px;
+    border-radius: 25px 25px 7px 7px;
+    background: #102219;
+}
+.f-cap::after {
+    content: "";
+    position: absolute;
+    right: -21px;
+    bottom: 1px;
+    width: 35px;
+    height: 7px;
+    border-radius: 6px;
+    background: #102219;
+}
+
+/* Bun hair – Person Mitte: Dutt-Kugel oberhalb des Kopfes */
+.f-bun-hair {
+    position: absolute;
+    z-index: 4;
+    top: 4px;
+    left: 47px;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: #9f835f;
+    box-shadow: inset -4px 4px 0 #7a6044;
+}
+
+/* Wave hair – Person Rechts: kein separates Element nötig */
+.f-dark-hair {
+    display: none;
+}
+
+/* Haar per inset box-shadow direkt auf dem Kopf – wie Business-Use-Case */
+.f-student-bun .f-head,
+.f-student-wave .f-head {
+    left: 41px;
+    top: 18px;
+    width: 45px;
+    height: 49px;
+    border-radius: 48% 48% 45% 45%;
+}
+/* Hellbraunes Haar (Bun-Person): inset von links oben */
+.f-student-bun .f-head {
+    box-shadow: inset -10px 9px 0 #9f835f;
+}
+/* Dunkles Haar (Wave-Person): inset von links oben */
+.f-student-wave .f-head {
+    box-shadow: inset -10px 9px 0 #35251e;
+}
+.f-team-tablet {
+    position: absolute;
+    z-index: 4;
+    left: 84px;
+    top: 99px;
+    width: 62px;
+    height: 84px;
+    padding: 5px;
+    border-radius: 8px;
+    background: #102219;
+    transform: rotate(5deg);
+    animation: f-tablet-focus 3s ease-in-out infinite;
+}
+.f-team-tablet-screen {
+    width: 100%;
+    height: 100%;
+    border-radius: 4px;
+    background:
+        linear-gradient(180deg, #113625 0 18%, transparent 18%),
+        radial-gradient(circle at 35% 58%, #ef9b28 0 8px, transparent 9px),
+        radial-gradient(circle at 67% 60%, #765035 0 8px, transparent 9px),
+        #d8eee2;
+}
+.f-dog {
+    position: absolute;
+    z-index: 5;
+    left: 20%;
+    bottom: -13px;
+    width: 166px;
+    height: 151px;
+    border-radius: 52% 52% 25% 25%;
+    background:
+        radial-gradient(ellipse at 50% 12%, #2d2927 0 27%, transparent 28%),
+        linear-gradient(90deg, #c68745 0 28%, #3d3430 29% 71%, #c68745 72%);
+    box-shadow: inset 0 -13px 0 rgba(58,40,30,.08);
+    transform: scale(.53);
+    transform-origin: left bottom;
+}
+.f-dog-head {
+    position: absolute;
+    z-index: 3;
+    left: 31px;
+    top: -94px;
+    width: 104px;
+    height: 112px;
+    border-radius: 44% 44% 52% 52% / 38% 38% 62% 62%;
+    background: #c98845;
+    box-shadow:
+        inset 13px 0 0 rgba(226,169,98,.28),
+        inset -10px 0 0 rgba(104,57,31,.13);
+}
+.f-dog-head::before {
+    content: "";
+    position: absolute;
+    z-index: 1;
+    left: 20px;
+    top: 7px;
+    width: 64px;
+    height: 72px;
+    border-radius: 42% 42% 48% 48%;
+    background: #40312c;
+    clip-path: polygon(18% 0, 82% 0, 100% 37%, 76% 58%, 70% 100%, 30% 100%, 24% 58%, 0 37%);
+}
+.f-dog-head::after {
+    content: "";
+    position: absolute;
+    z-index: 2;
+    left: 11px;
+    right: 11px;
+    top: 37px;
+    height: 40px;
+    border-radius: 50%;
+    background:
+        radial-gradient(ellipse at 19% 45%, #dfa35d 0 16px, transparent 17px),
+        radial-gradient(ellipse at 81% 45%, #dfa35d 0 16px, transparent 17px);
+}
+.f-dog-ear {
+    position: absolute;
+    z-index: 2;
+    left: 35px;
+    top: -132px;
+    width: 42px;
+    height: 66px;
+    clip-path: polygon(50% 0, 94% 100%, 6% 100%);
+    border-radius: 58% 58% 28% 28%;
+    background: #4b3028;
+    transform: rotate(-5deg);
+}
+.f-dog-ear::after {
+    content: "";
+    position: absolute;
+    left: 9px;
+    top: 12px;
+    width: 24px;
+    height: 43px;
+    clip-path: polygon(50% 0, 92% 100%, 8% 100%);
+    border-radius: 60% 60% 28% 28%;
+    background: #c96e63;
+}
+.f-dog-ear.two {
+    left: 89px;
+    transform: rotate(5deg) scaleX(-1);
+}
+.f-dog-eye {
+    position: absolute;
+    z-index: 6;
+    left: 57px;
+    top: -49px;
+    width: 9px;
+    height: 10px;
+    border-radius: 50%;
+    background: #171918;
+    box-shadow: 42px 0 0 #171918;
+}
+.f-dog-eye::before {
+    content: "";
+    position: absolute;
+    left: -4px;
+    top: -10px;
+    width: 17px;
+    height: 8px;
+    border-radius: 50%;
+    background: #e5a45b;
+    transform: rotate(-5deg);
+    box-shadow: 42px 4px 0 #e5a45b;
+}
+.f-dog-eye::after {
+    content: "";
+    position: absolute;
+    left: 2px;
+    top: 2px;
+    width: 2px;
+    height: 2px;
+    border-radius: 50%;
+    background: white;
+    box-shadow: 42px 0 0 white;
+}
+.f-dog-muzzle {
+    position: absolute;
+    z-index: 7;
+    left: 59px;
+    top: -29px;
+    width: 49px;
+    height: 38px;
+    border-radius: 48% 48% 56% 56%;
+    background: #352b28;
+    box-shadow: inset 0 -7px 0 rgba(16,18,17,.12);
+}
+.f-dog-muzzle::after {
+    content: "";
+    position: absolute;
+    left: 14px;
+    top: 3px;
+    width: 21px;
+    height: 13px;
+    border-radius: 52% 52% 46% 46%;
+    background: #111716;
+    box-shadow: inset 0 3px 0 rgba(255,255,255,.08);
+}
+.f-dog-mouth {
+    position: absolute;
+    z-index: 8;
+    left: 74px;
+    top: -1px;
+    width: 19px;
+    height: 10px;
+    border-bottom: 3px solid #141817;
+    border-radius: 0 0 50% 50%;
+}
+.f-dog-tongue {
+    position: absolute;
+    z-index: 7;
+    left: 78px;
+    top: 6px;
+    width: 11px;
+    height: 14px;
+    border-radius: 3px 3px 8px 8px;
+    background: #df7c79;
+    box-shadow: inset -3px 0 0 rgba(135,49,52,.15);
+    animation: f-dog-happy 2.6s ease-in-out infinite;
+}
+.f-dog-chest {
+    position: absolute;
+    z-index: 2;
+    left: 46px;
+    top: 14px;
+    width: 74px;
+    height: 137px;
+    background: #efd19d;
+    clip-path: polygon(50% 0, 94% 25%, 78% 47%, 86% 100%, 14% 100%, 22% 47%, 6% 25%);
+}
+.f-dog-shoulder {
+    position: absolute;
+    z-index: 1;
+    left: 18px;
+    top: 27px;
+    width: 130px;
+    height: 69px;
+    border-radius: 50% 50% 28% 28%;
+    border-top: 25px solid #242b2c;
+    transform: rotate(-1deg);
+}
+
+/* FIXED: Dog tail – sauberer Halbkreisbogen */
+.f-dog-tail {
+    position: absolute;
+    z-index: 0;
+    right: -34px;
+    top: 52px;
+    width: 52px;
+    height: 52px;
+    border: 14px solid #b9763f;
+    border-left-color: transparent;
+    border-bottom-color: transparent;
+    border-radius: 50%;
+    transform-origin: 12px 40px;
+    animation: f-dog-tail-wag 1.5s ease-in-out infinite;
+}
+
+.f-team-produce-crate {
+    position: absolute;
+    z-index: 5;
+    right: 8%;
+    bottom: 1px;
+    width: 126px;
+    height: 78px;
+    border: 5px solid #865d35;
+    border-top-width: 8px;
+    border-radius: 10px 10px 7px 7px;
+    background:
+        linear-gradient(180deg, transparent 0 42%, rgba(108,67,34,.24) 43% 48%, transparent 49% 69%, rgba(108,67,34,.22) 70% 75%, transparent 76%),
+        #b9854e;
+    box-shadow: inset 0 -8px 0 rgba(92,56,30,.12);
+}
+.f-team-produce-crate::before,
+.f-team-produce-crate::after {
+    content: "";
+    position: absolute;
+    top: -31px;
+    width: 39px;
+    height: 35px;
+    border-radius: 52% 48% 50% 46%;
+    box-shadow: inset -6px -5px 0 rgba(65,73,31,.12);
+}
+.f-team-produce-crate::before {
+    left: 15px;
+    background:
+        radial-gradient(ellipse at 55% 4%, #416939 0 5px, transparent 6px),
+        #73a64e;
+    transform: rotate(-7deg);
+}
+.f-team-produce-crate::after {
+    right: 13px;
+    background:
+        radial-gradient(ellipse at 48% 4%, #42633a 0 5px, transparent 6px),
+        #dc6b4f;
+    transform: rotate(7deg);
+}
+.f-team-produce {
+    position: absolute;
+    z-index: 6;
+    top: -35px;
+    left: 47px;
+    width: 34px;
+    height: 38px;
+    border-radius: 48% 52% 50% 50%;
+    background:
+        radial-gradient(ellipse at 50% 4%, #4b7041 0 5px, transparent 6px),
+        #efaa36;
+    box-shadow:
+        -31px 7px 0 -6px #8fb84f,
+        31px 7px 0 -6px #719b45;
+}
+@keyframes f-tail { 0%,100% { transform:rotate(-30deg); } 50% { transform:rotate(-12deg); } }
+@keyframes f-dog-happy {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(2px); }
+}
+@keyframes f-dog-tail-wag {
+    0%, 100% { transform: rotate(-18deg); }
+    50% { transform: rotate(10deg); }
+}
+
 @media (max-width: 800px) {
     .block-container { padding: 0 1rem 3rem !important; }
     .f-topline, .f-nav { margin-left: -1rem; margin-right: -1rem; }
+    .st-key-sticky_navigation {
+        width: calc(100% + 2rem) !important;
+        margin: 0 -1rem;
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
     .f-nav { padding: 0 1rem; }
     .f-nav-meta { display: none; }
     .f-hero { grid-template-columns: 1fr; padding-top: 2rem; }
     .f-status { min-width: 0; }
     .f-metrics { grid-template-columns: 1fr; }
+    .f-story { grid-template-columns: 1fr; }
+    .f-pipeline { grid-template-columns: 1fr 1fr; }
+    .f-pipeline::before, .f-data-pulse { display: none; }
 }
 </style>
 """,
@@ -574,7 +1626,6 @@ def predict_freshness(image: Image.Image) -> tuple[str, float, str]:
         label, confidence = normalize_prediction(predict_image(image))
         return label, confidence, "src.predict.predict_image"
     except Exception:
-        # Deterministic visual heuristic for UI demonstrations only.
         sample = image.copy()
         sample.thumbnail((160, 160))
         pixels = list(sample.convert("RGB").getdata())
@@ -639,9 +1690,7 @@ def draw_boxes(
     draw = ImageDraw.Draw(canvas)
     width, height = canvas.size
     line_width = max(3, int(min(width, height) * 0.006))
-    color = "#00A962" if freshness_label == "edible" else "#C9362B"
-    verdict = "Verwertbar" if freshness_label == "edible" else "Prüfen"
-    font = load_font(max(13, int(min(width, height) * 0.028)))
+    base_font_size = max(11, int(min(width, height) * 0.026))
 
     boxes = detections or [{
         "box": [
@@ -655,6 +1704,10 @@ def draw_boxes(
     }]
 
     for detection in boxes:
+        item_label = detection.get("freshness_label", freshness_label)
+        item_confidence = detection.get("freshness_confidence", confidence)
+        color = "#00A962" if item_label == "edible" else "#C9362B"
+        verdict = "Verwertbar" if item_label == "edible" else "Prüfen"
         x1, y1, x2, y2 = detection["box"]
         x1, x2 = sorted((max(0, x1), min(width - 1, x2)))
         y1, y2 = sorted((max(0, y1), min(height - 1, y2)))
@@ -665,19 +1718,50 @@ def draw_boxes(
             width=line_width,
         )
 
-        label_text = f"{detection['label']}  {detection['score']:.0%} · {verdict}"
-        text_box = draw.textbbox((0, 0), label_text, font=font)
+        is_portrait = height > width * 1.15
+        if is_portrait:
+            label_text = (
+                f"{detection['label']} · Objekt {detection['score']:.0%}\n"
+                f"Frische {item_confidence:.0%} · {verdict}"
+            )
+        else:
+            label_text = (
+                f"{detection['label']} · Objekt {detection['score']:.0%} · "
+                f"Frische {item_confidence:.0%} · {verdict}"
+            )
+        font_size = base_font_size
+        font = load_font(font_size)
+        text_box = draw.multiline_textbbox((0, 0), label_text, font=font, spacing=2)
+        max_text_width = max(40, width - line_width * 8)
+        while text_box[2] - text_box[0] > max_text_width and font_size > 8:
+            font_size -= 1
+            font = load_font(font_size)
+            text_box = draw.multiline_textbbox((0, 0), label_text, font=font, spacing=2)
         text_width = text_box[2] - text_box[0]
         text_height = text_box[3] - text_box[1]
-        pad_x, pad_y = line_width * 3, line_width * 2
-        pill_top = max(0, y1 - text_height - pad_y * 2 - line_width)
-        pill_right = min(width, x1 + text_width + pad_x * 2)
+        pad_x, pad_y = max(4, line_width * 2), max(3, line_width)
+        pill_width = min(width, text_width + pad_x * 2)
+        pill_left = min(max(0, x1), max(0, width - pill_width))
+        pill_height = text_height + pad_y * 2
+        if y1 >= pill_height + line_width:
+            pill_top = y1 - pill_height - line_width
+            pill_bottom = pill_top + pill_height
+        else:
+            pill_top = min(max(0, y1 + line_width), max(0, height - pill_height))
+            pill_bottom = pill_top + pill_height
+        pill_right = pill_left + pill_width
         draw.rounded_rectangle(
-            [x1, pill_top, pill_right, y1],
+            [pill_left, pill_top, pill_right, pill_bottom],
             radius=max(4, line_width * 2),
             fill=color,
         )
-        draw.text((x1 + pad_x, pill_top + pad_y), label_text, fill="white", font=font)
+        draw.multiline_text(
+            (pill_left + pad_x, pill_top + pad_y - text_box[1]),
+            label_text,
+            fill="white",
+            font=font,
+            spacing=2,
+        )
 
     return canvas
 
@@ -702,10 +1786,11 @@ def result_copy(label: str, confidence: float) -> tuple[str, str, str, str]:
 def generate_pdf(
     report_id: str,
     timestamp: str,
-    context: dict[str, Any],
     label: str,
     confidence: float,
     annotated_image: Image.Image,
+    detections: list[dict[str, Any]],
+    engines: dict[str, str],
 ) -> bytes | None:
     try:
         from reportlab.lib import colors
@@ -741,24 +1826,33 @@ def generate_pdf(
     verdict_color = green if label == "edible" else red
 
     styles = {
-        "brand": ParagraphStyle("brand", fontName="Helvetica-Bold", fontSize=16, textColor=green),
-        "title": ParagraphStyle(
-            "title", fontName="Helvetica-Bold", fontSize=18, textColor=ink, spaceAfter=4
+        "brand": ParagraphStyle(
+            "brand", fontName="Helvetica-Bold", fontSize=16, leading=20,
+            textColor=green, spaceAfter=5
         ),
-        "meta": ParagraphStyle("meta", fontName="Helvetica", fontSize=8, textColor=muted),
+        "title": ParagraphStyle(
+            "title", fontName="Helvetica-Bold", fontSize=18, leading=23,
+            textColor=ink, spaceAfter=8
+        ),
+        "meta": ParagraphStyle(
+            "meta", fontName="Helvetica", fontSize=8, leading=12,
+            textColor=muted, spaceAfter=5
+        ),
         "label": ParagraphStyle(
             "label",
             fontName="Helvetica-Bold",
             fontSize=7,
             textColor=muted,
-            spaceBefore=12,
-            spaceAfter=5,
+            spaceBefore=16,
+            spaceAfter=8,
         ),
         "verdict": ParagraphStyle(
-            "verdict", fontName="Helvetica-Bold", fontSize=13, textColor=verdict_color
+            "verdict", fontName="Helvetica-Bold", fontSize=13, leading=18,
+            textColor=verdict_color, spaceAfter=6
         ),
         "body": ParagraphStyle(
-            "body", fontName="Helvetica", fontSize=8.5, leading=13, textColor=muted
+            "body", fontName="Helvetica", fontSize=8.5, leading=14,
+            textColor=muted, spaceAfter=5
         ),
     }
 
@@ -769,13 +1863,14 @@ def generate_pdf(
             f"Protokoll-ID: <b>{escape(report_id)}</b> · {escape(timestamp)} · v{APP_VERSION}",
             styles["meta"],
         ),
-        Spacer(1, 8),
+        Spacer(1, 12),
         Paragraph("BEFUND", styles["label"]),
         Paragraph(
             "Visuell verwertbar" if label == "edible" else "Manuelle Kontrolle erforderlich",
             styles["verdict"],
         ),
         Paragraph(f"ML-Konfidenz: <b>{confidence:.0%}</b>", styles["body"]),
+        Spacer(1, 5),
         Paragraph("ANALYSE-OVERLAY", styles["label"]),
     ]
 
@@ -783,19 +1878,19 @@ def generate_pdf(
     story.extend(
         [
             ReportImage(image_buffer, width=130 * mm, height=97.5 * mm, kind="proportional"),
-            Paragraph("CHARGENDATEN", styles["label"]),
+            Spacer(1, 10),
+            Paragraph("ANALYSEDATEN", styles["label"]),
         ]
     )
 
     rows = [
         ["Feld", "Wert"],
-        ["Warengruppe", context.get("food_type", "–")],
-        ["Chargen-ID", context.get("batch_id") or "–"],
-        ["Gebinde", str(context.get("quantity", 1))],
-        ["Prozessschritt", context.get("process_step", "–")],
-        ["Notiz", context.get("note") or "–"],
+        ["Protokoll-ID", report_id],
         ["ML-Klasse", label],
         ["ML-Konfidenz", f"{confidence:.4f}"],
+        ["Erkannte Objekte", str(len(detections)) if detections else "1 (Demo)"],
+        ["Frischemodell", engines.get("freshness", "–")],
+        ["Objekterkennung", engines.get("detection", "–")],
         ["Zeitpunkt", timestamp],
         ["App-Version", APP_VERSION],
     ]
@@ -812,14 +1907,17 @@ def generate_pdf(
                 ("GRID", (0, 0), (-1, -1), 0.4, border),
                 ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, soft]),
                 ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-                ("PADDING", (0, 0), (-1, -1), 6),
+                ("TOPPADDING", (0, 0), (-1, -1), 8),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+                ("LEFTPADDING", (0, 0), (-1, -1), 7),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 7),
             ]
         )
     )
     story.extend(
         [
             table,
-            Spacer(1, 14),
+            Spacer(1, 18),
             Paragraph(
                 "Automatisierte visuelle ML-Analyse. Geruch, Kerntemperatur und "
                 "mikrobiologische Belastung sind separat zu prüfen. Freshify unterstützt "
@@ -846,31 +1944,53 @@ st.markdown(
     </div>
     <div class="f-nav-meta">Visual Quality Intelligence</div>
 </div>
+""",
+    unsafe_allow_html=True,
+)
+
+with st.container(key="sticky_navigation"):
+    st.markdown(
+        f"""
 <div class="f-proto">
     <span class="f-proto-label">Prototyp · optimiert für</span>
     {chips}
 </div>
 """,
-    unsafe_allow_html=True,
-)
-
-nav_a, nav_b, nav_space = st.columns([1, 1.65, 7.35])
-with nav_a:
-    if st.button(
-        "Analyse",
-        type="primary" if st.session_state.page == "analyse" else "secondary",
-        use_container_width=True,
-    ):
-        st.session_state.page = "analyse"
-        st.rerun()
-with nav_b:
-    if st.button(
-        "So funktioniert es",
-        type="primary" if st.session_state.page == "about" else "secondary",
-        use_container_width=True,
-    ):
-        st.session_state.page = "about"
-        st.rerun()
+        unsafe_allow_html=True,
+    )
+    nav_a, nav_b, nav_c, nav_d = st.columns([1.05, 1.5, 1.7, 1.1])
+    with nav_a:
+        if st.button(
+            "◉  Analyse",
+            type="primary" if st.session_state.page == "analyse" else "secondary",
+            use_container_width=True,
+        ):
+            st.session_state.page = "analyse"
+            st.rerun()
+    with nav_b:
+        if st.button(
+            "So funktioniert es",
+            type="primary" if st.session_state.page == "about" else "secondary",
+            use_container_width=True,
+        ):
+            st.session_state.page = "about"
+            st.rerun()
+    with nav_c:
+        if st.button(
+            "Business Use Cases",
+            type="primary" if st.session_state.page == "business" else "secondary",
+            use_container_width=True,
+        ):
+            st.session_state.page = "business"
+            st.rerun()
+    with nav_d:
+        if st.button(
+            "Über uns",
+            type="primary" if st.session_state.page == "team" else "secondary",
+            use_container_width=True,
+        ):
+            st.session_state.page = "team"
+            st.rerun()
 
 
 if st.session_state.page == "analyse":
@@ -879,7 +1999,7 @@ if st.session_state.page == "analyse":
 <div class="f-hero">
     <div>
         <div class="f-eyebrow">B2B · Wareneingang und Qualitätssicherung</div>
-        <h1 class="f-title">Frische sichtbar machen.</h1>
+        <div class="f-title f-title-linkless">Frische sichtbar machen.</div>
         <p class="f-subtitle">
             Ware fotografieren, sichtbare Auffälligkeiten per ML einordnen und den
             Vorgang direkt dokumentieren. Schnell im Ablauf, nachvollziehbar im Ergebnis.
@@ -907,7 +2027,7 @@ if st.session_state.page == "analyse":
             unsafe_allow_html=True,
         )
 
-        upload_tab, camera_tab = st.tabs(["Datei oder Galerie", "Kamera"])
+        upload_tab, camera_tab = st.tabs(["Datei oder Galerie", "Foto aufnehmen"])
         uploaded_file = None
         camera_image = None
         with upload_tab:
@@ -920,32 +2040,67 @@ if st.session_state.page == "analyse":
         with camera_tab:
             camera_image = st.camera_input("Foto aufnehmen", label_visibility="collapsed")
 
-        image_source = camera_image if camera_image is not None else uploaded_file
-        if image_source is None:
+        replacement_file = st.session_state.get("replace_file")
+        image_source = (
+            replacement_file
+            if replacement_file is not None
+            else camera_image if camera_image is not None else uploaded_file
+        )
+        if image_source is not None:
             st.markdown(
                 """
-<div class="f-empty">
-    <div>
-        <div class="f-empty-icon">＋</div>
-        <div class="f-empty-title">Foto hinzufügen</div>
-        <div class="f-empty-copy">
-            Bild aus der Galerie oder vom Rechner auswählen.<br>
-            Eine helle Draufsicht liefert die stabilsten Ergebnisse.
-        </div>
-    </div>
-</div>
+<style>
+[data-testid="stFileUploader"],
+[data-testid="stCameraInput"] { display: none !important; }
+.st-key-replace_file,
+.st-key-replace_file [data-testid="stFileUploader"] {
+    display: block !important;
+}
+.st-key-replace_file [data-testid="stFileUploader"] section {
+    min-height: 50px !important;
+    padding: .35rem !important;
+    border: 0 !important;
+    background: transparent !important;
+}
+.st-key-replace_file [data-testid="stFileUploaderDropzoneInstructions"] {
+    display: none !important;
+}
+.st-key-replace_file [data-testid="stFileUploader"] section button {
+    min-width: 100% !important;
+    min-height: 40px !important;
+    background: var(--surface-soft) !important;
+    color: var(--ink) !important;
+    border: 1px solid var(--border) !important;
+    box-shadow: none !important;
+}
+[data-testid="stImage"] {
+    min-height: 345px;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--surface-soft);
+}
+[data-testid="stImage"] img {
+    width: 100%;
+    height: 345px;
+    object-fit: contain;
+}
+</style>
 """,
                 unsafe_allow_html=True,
             )
-        else:
             raw_bytes = source_bytes(image_source)
             analysis_key = f"{getattr(image_source, 'name', 'camera')}:{len(raw_bytes)}:{hash(raw_bytes)}"
             if st.session_state.analysis_key != analysis_key:
                 with st.spinner("ML-Analyse läuft …"):
+                    started_at = time.perf_counter()
                     image = Image.open(io.BytesIO(raw_bytes)).convert("RGB")
                     label, confidence, freshness_engine = predict_freshness(image)
                     detections, detection_engine = detect_objects(image)
                     annotated = draw_boxes(image, detections, label, confidence)
+                    inference_ms = (time.perf_counter() - started_at) * 1000
                     time.sleep(0.25)
                     st.session_state.update(
                         {
@@ -959,6 +2114,8 @@ if st.session_state.page == "analyse":
                                 "freshness": freshness_engine,
                                 "detection": detection_engine,
                             },
+                            "last_inference_ms": inference_ms,
+                            "last_image_size": image.size,
                         }
                     )
 
@@ -967,23 +2124,17 @@ if st.session_state.page == "analyse":
                 use_container_width=True,
                 caption="ML-Overlay · Grün: visuell unauffällig · Rot: manuell prüfen",
             )
-            download_image_a, download_image_b = st.columns(2)
-            with download_image_a:
-                st.download_button(
-                    "Originalfoto herunterladen",
-                    data=image_bytes(st.session_state.last_original),
-                    file_name="freshify_original.png",
-                    mime="image/png",
-                    use_container_width=True,
-                )
-            with download_image_b:
-                st.download_button(
-                    "Overlay herunterladen",
-                    data=image_bytes(st.session_state.last_annotated),
-                    file_name="freshify_ml_overlay.png",
-                    mime="image/png",
-                    use_container_width=True,
-                )
+            st.markdown(
+                '<div class="f-section-label" style="margin-top:.7rem">Anderes Bild analysieren</div>',
+                unsafe_allow_html=True,
+            )
+            st.file_uploader(
+                "Bild ersetzen",
+                type=["jpg", "jpeg", "png"],
+                key="replace_file",
+                label_visibility="collapsed",
+                help="Eine neue Datei auswählen und die aktuelle Analyse ersetzen.",
+            )
 
     with right_column.container(border=True):
         st.markdown(
@@ -999,8 +2150,15 @@ if st.session_state.page == "analyse":
         if image_source is None or st.session_state.last_label is None:
             st.markdown(
                 """
-<div class="f-notice">
-    Nach dem Foto erscheinen hier Befund, Chargendaten und Exporte.
+<div class="f-awaiting">
+    <div>
+        <div class="f-awaiting-icon"></div>
+        <div class="f-awaiting-title">Bereit für den ersten Befund</div>
+        <div class="f-awaiting-copy">
+            Nach der Bilderfassung erscheinen hier ML-Ergebnis, Laufzeitmetriken
+            sowie PDF- und JSON-Export.
+        </div>
+    </div>
 </div>
 """,
                 unsafe_allow_html=True,
@@ -1011,6 +2169,8 @@ if st.session_state.page == "analyse":
             annotated = st.session_state.last_annotated
             detections = st.session_state.last_detections
             engines = st.session_state.last_engine
+            inference_ms = st.session_state.get("last_inference_ms", 0.0)
+            image_width, image_height = st.session_state.get("last_image_size", (0, 0))
 
             if engines["freshness"] == "Demo-Heuristik":
                 st.markdown(
@@ -1043,6 +2203,17 @@ if st.session_state.page == "analyse":
             timestamp = datetime.now().strftime("%d.%m.%Y, %H:%M")
             object_count = len(detections)
             object_display = str(object_count) if object_count else "1 · Demo"
+            detection_scores = [det["score"] for det in detections if det.get("score") is not None]
+            mean_detection = (
+                f"{sum(detection_scores) / len(detection_scores):.0%}"
+                if detection_scores
+                else "–"
+            )
+            engine_display = (
+                "Projektmodell"
+                if engines["freshness"] != "Demo-Heuristik"
+                else "Demo"
+            )
             st.markdown(
                 f"""
 <div class="f-metrics">
@@ -1055,86 +2226,35 @@ if st.session_state.page == "analyse":
         <div class="f-metric-value">{object_display}</div>
     </div>
     <div class="f-metric">
-        <div class="f-metric-label">Zeitpunkt</div>
-        <div class="f-metric-value">{timestamp}</div>
+        <div class="f-metric-label">Ø Objekt-Score</div>
+        <div class="f-metric-value">{mean_detection}</div>
+    </div>
+    <div class="f-metric">
+        <div class="f-metric-label">Inferenzzeit</div>
+        <div class="f-metric-value">{inference_ms:.0f} ms</div>
+    </div>
+    <div class="f-metric">
+        <div class="f-metric-label">Bildauflösung</div>
+        <div class="f-metric-value">{image_width} × {image_height}</div>
+    </div>
+    <div class="f-metric">
+        <div class="f-metric-label">Engine</div>
+        <div class="f-metric-value">{engine_display}</div>
     </div>
 </div>
 """,
                 unsafe_allow_html=True,
             )
 
-            st.markdown('<div class="f-section-label">Chargendaten</div>', unsafe_allow_html=True)
-            autofill_column, autofill_space = st.columns([1.35, 1.65])
-            with autofill_column:
-                if st.button("Daten vorschlagen", use_container_width=True):
-                    st.session_state.update(
-                        {
-                            "af_food": "Obst",
-                            "af_batch": (
-                                f"FC-{datetime.now():%Y%m%d}-{uuid.uuid4().hex[:6].upper()}"
-                            ),
-                            "af_qty": 1,
-                            "af_step": "Wareneingang",
-                            "af_note": (
-                                f"Freshify v{APP_VERSION} · ML-Befund: "
-                                f"{'visuell unauffällig' if label == 'edible' else 'manuell prüfen'}."
-                            ),
-                        }
-                    )
-                    st.rerun()
-
-            default_food = st.session_state.get("af_food", "Obst")
-            food_type = st.selectbox(
-                "Warengruppe",
-                FOOD_CATEGORIES,
-                index=FOOD_CATEGORIES.index(default_food),
-            )
-            batch_column, quantity_column = st.columns(2)
-            with batch_column:
-                batch_id = st.text_input(
-                    "Chargen-ID",
-                    value=st.session_state.get("af_batch", ""),
-                    placeholder="FC-20260610-A4B2F1",
-                )
-            with quantity_column:
-                quantity = st.number_input(
-                    "Gebinde",
-                    min_value=1,
-                    value=int(st.session_state.get("af_qty", 1)),
-                    step=1,
-                )
-            default_step = st.session_state.get("af_step", "Wareneingang")
-            process_step = st.selectbox(
-                "Prozessschritt",
-                ORG_STEPS,
-                index=ORG_STEPS.index(default_step),
-            )
-            note = st.text_area(
-                "Interne Notiz",
-                value=st.session_state.get("af_note", ""),
-                placeholder="Optionaler Kontext für das Protokoll",
-                height=76,
-            )
-
-            context = {
-                "food_type": food_type,
-                "batch_id": batch_id,
-                "quantity": quantity,
-                "process_step": process_step,
-                "note": note,
-            }
-            report_id = batch_id or f"FC-{datetime.now():%Y%m%d%H%M%S}"
+            report_id = f"FC-{datetime.now():%Y%m%d%H%M%S}"
             report_data = {
                 "protokoll_id": report_id,
                 "zeitpunkt": timestamp,
-                "warengruppe": food_type,
-                "chargen_id": batch_id or None,
-                "gebinde": quantity,
-                "prozessschritt": process_step,
                 "ml_klasse": label,
                 "ml_konfidenz": round(confidence, 4),
+                "inferenzzeit_ms": round(inference_ms, 2),
+                "bildaufloesung": [image_width, image_height],
                 "objekte": detections,
-                "notiz": note or None,
                 "schnittstellen": engines,
                 "app_version": APP_VERSION,
                 "prototyp": True,
@@ -1145,10 +2265,11 @@ if st.session_state.page == "analyse":
             pdf_bytes = generate_pdf(
                 report_id,
                 timestamp,
-                context,
                 label,
                 confidence,
                 annotated,
+                detections,
+                engines,
             )
             with export_pdf:
                 if pdf_bytes:
@@ -1175,21 +2296,24 @@ if st.session_state.page == "analyse":
 
             st.markdown(
                 """
-<div class="f-notice">
-    <strong>Ein Werkzeug, kein Orakel.</strong> Freshify bewertet sichtbare Merkmale.
-    Geruch, Kerntemperatur und mikrobiologische Risiken bleiben Teil der Fachprüfung.
+<div class="f-notice f-safety-notice">
+    <span class="f-safety-icon">!</span>
+    <span class="f-safety-copy">
+        <strong>Ein Werkzeug, kein Orakel.</strong> Freshify bewertet sichtbare Merkmale.
+        Geruch, Kerntemperatur und mikrobiologische Risiken bleiben Teil der Fachprüfung.
+    </span>
 </div>
 """,
                 unsafe_allow_html=True,
             )
 
-else:
+elif st.session_state.page == "about":
     st.markdown(
         """
 <div class="f-hero">
     <div>
         <div class="f-eyebrow">Produkt und Methodik</div>
-        <h1 class="f-title">Klare Unterstützung. Klare Grenzen.</h1>
+        <div class="f-title f-title-linkless">Klare Unterstützung. Klare Grenzen.</div>
         <p class="f-subtitle">
             Freshify strukturiert die visuelle Erstsichtung im Wareneingang.
             Das System liefert einen Hinweis, die Freigabe bleibt eine Fachentscheidung.
@@ -1199,6 +2323,188 @@ else:
 """,
         unsafe_allow_html=True,
     )
+
+if st.session_state.page == "business":
+    st.markdown(
+        """
+<div class="f-hero">
+    <div>
+        <div class="f-eyebrow">Business Use Cases</div>
+        <div class="f-title f-title-linkless">Von der Einzelkiste bis zum Warenstrom.</div>
+        <p class="f-subtitle">
+            Freshify kann Mitarbeitende bei einer mobilen Sichtprüfung unterstützen
+            oder als Baustein einer automatisierten Qualitätslinie eingesetzt werden.
+        </p>
+    </div>
+</div>
+""",
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        """
+<div class="f-about">
+    <div class="f-stories">
+        <div class="f-story">
+            <div class="f-story-copy">
+                <div class="f-story-kicker">Business Use Case 01 · Mobile Prüfung</div>
+                <h3>Mehr Sicherheit direkt an der Obstkiste</h3>
+                <p>
+                    Eine Person fotografiert die Ware mit der Tablet-Kamera. Das ML
+                    markiert unauffällige Produkte grün und auffällige Produkte rot.
+                    So lässt sich ein Fund direkt in der Kiste lokalisieren, statt nur
+                    eine abstrakte Anzahl zu erhalten.<br><br>
+                    <strong>Profiteure:</strong> Spendenstellen und Restaurants, die
+                    wechselnde Lieferungen schnell, nachvollziehbar und mit wenig
+                    technischem Aufwand vorsortieren möchten.
+                </p>
+            </div>
+            <div class="f-scene" aria-label="Person fotografiert eine Obstkiste mit einem Tablet">
+                <div class="f-person">
+                    <div class="f-head"></div>
+                    <div class="f-body"></div>
+                    <div class="f-arm"></div>
+                </div>
+                <div class="f-tablet">
+                    <div class="f-tablet-screen"></div>
+                    <div class="f-tablet-good-box"></div>
+                    <div class="f-tablet-line"></div>
+                </div>
+                <div class="f-crate">
+                    <span class="f-fruit f-f1"></span>
+                    <span class="f-fruit f-f2 bad"></span>
+                    <span class="f-fruit f-f3"></span>
+                    <span class="f-fruit f-f4"></span>
+                    <span class="f-fruit f-f5"></span>
+                </div>
+                <div class="f-help-pill">Overlay · Rot direkt lokalisieren</div>
+            </div>
+        </div>
+        <div class="f-story">
+            <div class="f-story-copy">
+                <div class="f-story-kicker">Business Use Case 02 · Automatisierung</div>
+                <h3>Kontinuierliche Sichtprüfung am Fließband</h3>
+                <p>
+                    Eine fest installierte Kamera analysiert vorbeifahrende Kisten.
+                    Die Meldung zeigt nicht nur 14 unauffällige und 2 zu prüfende
+                    Produkte, sondern auch das Ergebnisfoto: Grün steht für
+                    unauffällig, Rot zeigt die exakte Position einer Auffälligkeit.<br><br>
+                    <strong>Profiteure:</strong> Kantinen und Supermärkte mit
+                    wiederkehrenden Warenströmen, höherem Volumen und Bedarf an
+                    schneller, standardisierter Dokumentation.
+                </p>
+            </div>
+            <div class="f-scene f-belt-scene" aria-label="Kamera scannt eine Obstkiste auf einem Fließband">
+                <div class="f-belt"></div>
+                <div class="f-crate f-moving-crate">
+                    <span class="f-fruit f-f1"></span>
+                    <span class="f-fruit f-f2 bad"></span>
+                    <span class="f-fruit f-f3"></span>
+                    <span class="f-fruit f-f4"></span>
+                    <span class="f-fruit f-f5 bad"></span>
+                </div>
+                <div class="f-camera-rig"></div>
+                <div class="f-lens"></div>
+                <div class="f-scan-beam"></div>
+                <div class="f-bad-box"></div>
+                <div class="f-person f-alert-person">
+                    <div class="f-head"></div>
+                    <div class="f-body"></div>
+                </div>
+                <div class="f-phone">
+                    <div class="f-phone-title">Kiste analysiert</div>
+                    <div class="f-result-photo">
+                        <span class="f-rp1"></span><span class="f-rp2"></span>
+                        <span class="f-rp3"></span><span class="f-rp4"></span>
+                    </div>
+                    <div class="f-phone-row good"><span>Frisch</span><strong>14</strong></div>
+                    <div class="f-phone-row bad"><span>Prüfen</span><strong>2</strong></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+""",
+        unsafe_allow_html=True,
+    )
+
+if st.session_state.page == "team":
+    st.markdown(
+        """
+<div class="f-hero">
+    <div>
+        <div class="f-eyebrow">Über uns</div>
+        <div class="f-title f-title-linkless">Drei Studierende. Eine praktische ML-Idee.</div>
+        <p class="f-subtitle">
+            Freshify ist ein studentischer Prototyp, der visuelle Qualitätskontrolle
+            verständlicher, schneller und besser dokumentierbar machen soll.
+        </p>
+    </div>
+</div>
+""",
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        f"""
+<div class="f-about">
+    <div class="f-team-scene" aria-label="Das P-Team mit drei Studierenden und einem Schäferhund">
+        <div class="f-team-label">Das P-Team</div>
+        <div class="f-student f-student-cap">
+            <div class="f-head"></div>
+            <div class="f-cap"></div>
+            <div class="f-body"></div>
+        </div>
+        <div class="f-dog">
+            <span class="f-dog-tail"></span>
+            <span class="f-dog-ear"></span>
+            <span class="f-dog-ear two"></span>
+            <span class="f-dog-head"></span>
+            <span class="f-dog-shoulder"></span>
+            <span class="f-dog-chest"></span>
+            <span class="f-dog-eye"></span>
+            <span class="f-dog-muzzle"></span>
+            <span class="f-dog-mouth"></span>
+            <span class="f-dog-tongue"></span>
+        </div>
+        <div class="f-student f-student-bun">
+            <div class="f-head"></div>
+            <div class="f-bun-hair"></div>
+            <div class="f-body"></div>
+            <div class="f-team-arm f-arm-tablet"></div>
+            <div class="f-team-tablet"><div class="f-team-tablet-screen"></div></div>
+        </div>
+        <div class="f-student f-student-wave">
+            <div class="f-head"></div>
+            <div class="f-dark-hair"></div>
+            <div class="f-body"></div>
+        </div>
+        <div class="f-team-produce-crate">
+            <span class="f-team-produce"></span>
+        </div>
+    </div>
+    <div class="f-card">
+        <h3>Das Projekt</h3>
+        <p>
+            Freshify wurde vom <strong>P-Team</strong>, drei Studierenden, im Rahmen der
+            Lehrveranstaltung <strong>Machine Learning for Business</strong> entwickelt.
+            Im Mittelpunkt steht nicht nur ein ML-Modell, sondern die Frage, wie aus
+            technischer Erkennung ein sinnvoller und verständlicher Arbeitsablauf entsteht.
+        </p>
+    </div>
+    <div class="f-card">
+        <h3>Unser Ansatz</h3>
+        <p>
+            Der Prototyp kombiniert Objekterkennung, bildbasierte Frischebewertung,
+            visuelle Overlays und strukturierte Exporte. Ziel ist eine Lösung, die
+            Mitarbeitende unterstützt, ohne menschliche Qualitätskontrolle oder
+            sensorische Prüfungen zu ersetzen.
+        </p>
+    </div>
+</div>
+""",
+        unsafe_allow_html=True,
+    )
+
+if st.session_state.page == "about":
     st.markdown(
         f"""
 <div class="f-about">
@@ -1206,8 +2512,38 @@ else:
         <h3>Warum Freshify?</h3>
         <p>
             Große Warenmengen, wenig Zeit und wechselnde Teams machen konsistente
-            Erstsichtungen schwer. Freshify verbindet Foto, visuellen ML-Befund,
-            Chargendaten und Export in einem kompakten Ablauf.
+            Erstsichtungen schwer. Freshify verbindet Foto, visuellen ML-Befund
+            und einen klaren Export in einem kompakten Ablauf.
+        </p>
+    </div>
+    <div class="f-ml-viz">
+        <div class="f-ml-viz-head">Vom Prototyp zur produktgenauen Frischeanalyse</div>
+        <div class="f-ml-viz-copy">
+            Im Prototyp wurden CNN und YOLO trainiert beziehungsweise angebunden:
+            Das CNN bewertet aktuell das Gesamtbild, YOLO liefert Produktpositionen.
+            Die produktweise Crop-Verknüpfung ist als nächster Endprodukt-Schritt vorgesehen.
+        </div>
+        <div class="f-pipeline">
+            <div class="f-data-pulse"></div>
+            <div class="f-pipe-node"><div class="f-pipe-visual f-input-visual"><span></span></div><div class="f-pipe-title">Eingangsbild</div><div class="f-pipe-sub">Kamera oder Galerie</div></div>
+            <div class="f-pipe-node"><div class="f-pipe-visual f-yolo-visual"></div><div class="f-pipe-title">YOLO · Prototyp</div><div class="f-pipe-sub">Findet Produkte und Bounding Boxes</div></div>
+            <div class="f-pipe-node"><div class="f-pipe-visual f-crop-visual"></div><div class="f-pipe-title">Crop · geplant</div><div class="f-pipe-sub">Schneidet jede Box für eine Einzelbewertung aus</div></div>
+            <div class="f-pipe-node"><div class="f-pipe-visual f-cnn-visual"></div><div class="f-pipe-title">CNN · Prototyp</div><div class="f-pipe-sub">Bewertet derzeit das Gesamtbild</div></div>
+            <div class="f-pipe-node"><div class="f-pipe-visual f-overlay-visual"></div><div class="f-pipe-title">Overlay · Zielbild</div><div class="f-pipe-sub">Position plus Einzelbewertung ergibt Grün oder Rot</div></div>
+        </div>
+    </div>
+    <div class="f-card">
+        <h3>Idee im Ablauf und aktueller Prototyp</h3>
+        <p>
+            <strong>Bereits umgesetzt:</strong> Das CNN wurde für die visuelle
+            Frischebewertung trainiert und bewertet im Prototyp ein Gesamtbild.
+            YOLO ist für die Erkennung und Positionierung von Produkten angebunden.
+            Beide Ergebnisse werden in der Oberfläche demonstriert.<br><br>
+            <strong>Für das Endprodukt vorgesehen:</strong> Jede YOLO-Box wird als
+            eigener Crop an das CNN übergeben. Dadurch erhält jedes Produkt eine
+            individuelle Bewertung und kann innerhalb derselben Kiste korrekt grün
+            oder rot markiert werden. Dieser Verknüpfungsschritt ist noch nicht
+            Bestandteil des aktuellen Prototyps.
         </p>
     </div>
     <div class="f-card">
@@ -1230,7 +2566,7 @@ else:
         <div class="f-flow-row">
             <div class="f-flow-num">4</div>
             <div><div class="f-flow-title">Dokumentieren</div>
-            <div class="f-flow-copy">Originalfoto, Overlay, PDF und JSON stehen direkt zum Download bereit.</div></div>
+            <div class="f-flow-copy">PDF und JSON stehen direkt zum Download bereit.</div></div>
         </div>
     </div>
     <div class="f-card">
@@ -1238,8 +2574,10 @@ else:
         <p>
             Freshify bindet ein Frischemodell über <strong>src.predict.predict_image</strong>
             und eine Objekterkennung über <strong>src.yolo.main.detect_objects</strong> an.
-            Fehlen diese Module, wechselt die Oberfläche sichtbar in den Demo-Modus.
-            Sie behauptet dann ausdrücklich keine echte Qualitätsanalyse.
+            Training und Prototypenlogik für CNN und YOLO sind vorgesehen beziehungsweise
+            projektseitig angebunden. Die produktweise Crop-Klassifikation ist noch Teil
+            der geplanten Endproduktarchitektur. Fehlen Modellmodule, wechselt die
+            Oberfläche sichtbar in den Demo-Modus.
         </p>
     </div>
     <div class="f-card">
