@@ -145,6 +145,12 @@ body { background: var(--canvas); }
     gap: .62rem;
     flex-wrap: wrap;
 }
+.f-proto-chips {
+    display: flex;
+    align-items: center;
+    gap: .62rem;
+    flex-wrap: wrap;
+}
 .f-proto-label {
     color: var(--muted);
     font-size: .78rem;
@@ -217,6 +223,7 @@ div[data-testid="stLayoutWrapper"]:has(> .st-key-sticky_navigation) {
     background: rgba(0,0,0,.24) !important;
     border-color: rgba(98,227,164,.12) !important;
 }
+.st-key-mobile_nav_toggle { display: none; }
 
 .f-hero {
     padding: 2.7rem 0 2rem;
@@ -333,6 +340,44 @@ div[data-testid="stLayoutWrapper"]:has(> .st-key-sticky_navigation) {
     background: var(--surface);
     box-shadow: var(--shadow-sm);
 }
+.st-key-capture_panel,
+.st-key-finding_panel {
+    height: 100%;
+    min-height: 570px;
+}
+.st-key-finding_panel {
+    padding-bottom: 1rem !important;
+}
+[data-testid="stHorizontalBlock"]:has(.st-key-capture_panel):has(.st-key-finding_panel) {
+    align-items: stretch;
+}
+[data-testid="stColumn"]:has(.st-key-capture_panel),
+[data-testid="stColumn"]:has(.st-key-finding_panel) {
+    display: flex;
+    flex-direction: column;
+}
+@media (min-width: 801px) {
+    [data-testid="stHorizontalBlock"]:has(.st-key-capture_panel):has(.st-key-finding_panel) {
+        display: grid !important;
+        grid-template-columns: minmax(0, 1.04fr) minmax(0, .96fr);
+        gap: 2rem;
+    }
+    [data-testid="stHorizontalBlock"]:has(.st-key-capture_panel):has(.st-key-finding_panel)
+    > [data-testid="stColumn"] {
+        width: auto !important;
+        min-width: 0 !important;
+        height: 100%;
+    }
+}
+[data-testid="stColumn"]:has(.st-key-capture_panel) > [data-testid="stVerticalBlock"],
+[data-testid="stColumn"]:has(.st-key-finding_panel) > [data-testid="stVerticalBlock"],
+[data-testid="stColumn"]:has(.st-key-capture_panel) [data-testid="stLayoutWrapper"],
+[data-testid="stColumn"]:has(.st-key-finding_panel) [data-testid="stLayoutWrapper"] {
+    height: 100%;
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+}
 
 .f-result {
     padding: 1rem;
@@ -415,6 +460,7 @@ div[data-testid="stLayoutWrapper"]:has(> .st-key-sticky_navigation) {
 }
 .f-safety-notice {
     margin-top: 1.5rem;
+    margin-bottom: 1rem;
     display: flex;
     align-items: flex-start;
     gap: .2rem;
@@ -431,7 +477,8 @@ div[data-testid="stLayoutWrapper"]:has(> .st-key-sticky_navigation) {
 }
 .f-safety-copy { min-width: 0; }
 .f-awaiting {
-    min-height: 270px;
+    min-height: 320px;
+    margin-top: .85rem;
     display: grid;
     place-items: center;
     padding: 1.4rem;
@@ -1016,6 +1063,8 @@ input:focus, textarea:focus {
     grid-template-columns: repeat(5, 1fr);
     gap: .7rem;
 }
+.f-pipeline-scroll { margin-top: 1.2rem; }
+.f-pipeline-scroll .f-pipeline { margin-top: 0; }
 .f-pipeline::before {
     content: "";
     position: absolute;
@@ -1156,6 +1205,10 @@ input:focus, textarea:focus {
         linear-gradient(180deg, #e3f1e9 0 69%, #bdd0c5 69% 71%, #eef3f0 71%);
     box-shadow: var(--shadow-sm);
 }
+.f-team-stage {
+    position: absolute;
+    inset: 0;
+}
 .f-team-label {
     position: absolute;
     left: 24px;
@@ -1174,11 +1227,11 @@ input:focus, textarea:focus {
 }
 .f-student .f-head {
     z-index: 2;
-    top: 18px;
-    left: 41px;
-    width: 45px;
-    height: 49px;
-    border-radius: 48% 48% 45% 45%;
+    top: 10px;
+    left: 36px;
+    width: 54px;
+    height: 56px;
+    border-radius: 49% 49% 46% 46%;
     box-shadow: none;
 }
 .f-student .f-body {
@@ -1205,7 +1258,7 @@ input:focus, textarea:focus {
     transform-origin: 8px center;
 }
 .f-arm-tablet {
-    right: -7px;
+    right: -18px;
     top: 96px;
     width: 59px;
     transform: rotate(15deg);
@@ -1213,63 +1266,57 @@ input:focus, textarea:focus {
 .f-cap {
     position: absolute;
     z-index: 3;
-    top: 14px;
+    top: 9px;
     left: 34px;
-    width: 61px;
-    height: 25px;
+    width: 55px;
+    height: 23px;
     border-radius: 25px 25px 7px 7px;
     background: #102219;
 }
 .f-cap::after {
     content: "";
     position: absolute;
-    right: -21px;
+    right: -18px;
     bottom: 1px;
-    width: 35px;
-    height: 7px;
+    width: 31px;
+    height: 6px;
     border-radius: 6px;
     background: #102219;
 }
-
-/* Bun hair – Person Mitte: Dutt-Kugel oberhalb des Kopfes */
 .f-bun-hair {
     position: absolute;
-    z-index: 4;
-    top: 4px;
-    left: 47px;
-    width: 26px;
-    height: 26px;
+    z-index: 3;
+    top: -1px;
+    left: 35px;
+    width: 22px;
+    height: 22px;
     border-radius: 50%;
     background: #9f835f;
-    box-shadow: inset -4px 4px 0 #7a6044;
 }
-
-/* Wave hair – Person Rechts: kein separates Element nötig */
+.f-bun-hair::before {
+    content: none;
+}
 .f-dark-hair {
     display: none;
 }
-
-/* Haar per inset box-shadow direkt auf dem Kopf – wie Business-Use-Case */
 .f-student-bun .f-head,
 .f-student-wave .f-head {
-    left: 41px;
-    top: 18px;
-    width: 45px;
-    height: 49px;
-    border-radius: 48% 48% 45% 45%;
+    left: 37px;
+    top: 12px;
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
 }
-/* Hellbraunes Haar (Bun-Person): inset von links oben */
 .f-student-bun .f-head {
-    box-shadow: inset -10px 9px 0 #9f835f;
+    box-shadow: inset 13px 10px 0 #9f835f;
 }
-/* Dunkles Haar (Wave-Person): inset von links oben */
 .f-student-wave .f-head {
-    box-shadow: inset -10px 9px 0 #35251e;
+    box-shadow: inset 13px 10px 0 #35251e;
 }
 .f-team-tablet {
     position: absolute;
     z-index: 4;
-    left: 84px;
+    left: 96px;
     top: 99px;
     width: 62px;
     height: 84px;
@@ -1468,23 +1515,28 @@ input:focus, textarea:focus {
     border-top: 25px solid #242b2c;
     transform: rotate(-1deg);
 }
-
-/* FIXED: Dog tail – sauberer Halbkreisbogen */
 .f-dog-tail {
     position: absolute;
-    z-index: 0;
-    right: -34px;
-    top: 52px;
-    width: 52px;
-    height: 52px;
-    border: 14px solid #b9763f;
-    border-left-color: transparent;
+    z-index: 4;
+    left: calc(20% - 20px);
+    bottom: -16px;
+    width: 43px;
+    height: 58px;
+    border: 10px solid #b9763f;
+    border-right-color: transparent;
     border-bottom-color: transparent;
-    border-radius: 50%;
-    transform-origin: 12px 40px;
+    border-radius: 78% 45% 34% 72%;
+    transform-origin: 38px 52px;
     animation: f-dog-tail-wag 1.5s ease-in-out infinite;
 }
-
+@keyframes f-dog-happy {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(2px); }
+}
+@keyframes f-dog-tail-wag {
+    0%, 100% { transform: rotate(-14deg); }
+    50% { transform: rotate(7deg); }
+}
 .f-team-produce-crate {
     position: absolute;
     z-index: 5;
@@ -1539,15 +1591,20 @@ input:focus, textarea:focus {
         -31px 7px 0 -6px #8fb84f,
         31px 7px 0 -6px #719b45;
 }
+.f-footer {
+    margin-top: 3.5rem;
+    padding: 1rem 0 .25rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    border-top: 1px solid var(--border);
+    color: var(--subtle);
+    font-size: .66rem;
+    line-height: 1.5;
+}
+.f-footer strong { color: var(--muted); font-weight: 700; }
 @keyframes f-tail { 0%,100% { transform:rotate(-30deg); } 50% { transform:rotate(-12deg); } }
-@keyframes f-dog-happy {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(2px); }
-}
-@keyframes f-dog-tail-wag {
-    0%, 100% { transform: rotate(-18deg); }
-    50% { transform: rotate(10deg); }
-}
 
 @media (max-width: 800px) {
     .block-container { padding: 0 1rem 3rem !important; }
@@ -1555,8 +1612,81 @@ input:focus, textarea:focus {
     .st-key-sticky_navigation {
         width: calc(100% + 2rem) !important;
         margin: 0 -1rem;
-        padding-left: 1rem;
-        padding-right: 1rem;
+        padding: .38rem .75rem .42rem;
+    }
+    .st-key-sticky_navigation .f-proto {
+        justify-content: flex-start;
+        gap: .55rem;
+        flex-wrap: nowrap;
+    }
+    .st-key-sticky_navigation .f-proto-label {
+        flex: 0 0 auto;
+        font-size: .61rem;
+        white-space: nowrap;
+    }
+    .st-key-sticky_navigation .f-proto-chips {
+        min-width: 0;
+        flex: 1 1 auto;
+        flex-wrap: nowrap;
+        gap: .35rem;
+        overflow-x: auto;
+        padding: .08rem .1rem .16rem;
+        scrollbar-width: none;
+    }
+    .st-key-sticky_navigation .f-proto-chips::-webkit-scrollbar { display: none; }
+    .st-key-sticky_navigation .f-chip {
+        flex: 0 0 auto;
+        padding: .14rem .46rem;
+        font-size: .66rem;
+    }
+    .st-key-sticky_navigation [data-testid="stHorizontalBlock"] {
+        gap: .2rem;
+        margin-top: .3rem;
+    }
+    .st-key-sticky_navigation .stButton > button {
+        min-height: 25px !important;
+        padding: 0 .3rem !important;
+        font-size: .66rem !important;
+        border-radius: 8px !important;
+    }
+    .st-key-mobile_nav_toggle {
+        display: block;
+        width: 38px;
+        margin: .18rem auto -.18rem;
+    }
+    .st-key-mobile_nav_toggle .stButton > button {
+        position: relative;
+        min-height: 24px !important;
+        width: 38px !important;
+        padding: 0 !important;
+        border-radius: 999px !important;
+        background: rgba(255,255,255,.065) !important;
+        border: 1px solid rgba(143,227,184,.2) !important;
+        box-shadow: 0 3px 10px rgba(0,0,0,.12) !important;
+    }
+    .st-key-mobile_nav_toggle .stButton > button p {
+        font-size: 0 !important;
+    }
+    .st-key-mobile_nav_toggle .stButton > button::before {
+        content: "";
+        width: 7px;
+        height: 7px;
+        border-top: 1.7px solid #8fe3b8;
+        border-left: 1.7px solid #8fe3b8;
+        transform: rotate(45deg) translate(1px, 1px);
+        transition: transform .18s ease;
+    }
+    .st-key-sticky_navigation:has(.f-nav-state.collapsed) .f-proto,
+    .st-key-sticky_navigation:has(.f-nav-state.collapsed) [data-testid="stHorizontalBlock"] {
+        display: none !important;
+    }
+    .st-key-sticky_navigation:has(.f-nav-state.collapsed) {
+        padding-top: .24rem;
+        padding-bottom: .35rem;
+    }
+    .st-key-sticky_navigation:has(.f-nav-state.collapsed)
+    .st-key-mobile_nav_toggle .stButton > button::before {
+        transform: rotate(225deg) translate(-1px, -1px);
     }
     .f-nav { padding: 0 1rem; }
     .f-nav-meta { display: none; }
@@ -1564,8 +1694,77 @@ input:focus, textarea:focus {
     .f-status { min-width: 0; }
     .f-metrics { grid-template-columns: 1fr; }
     .f-story { grid-template-columns: 1fr; }
-    .f-pipeline { grid-template-columns: 1fr 1fr; }
-    .f-pipeline::before, .f-data-pulse { display: none; }
+    .f-ml-viz { padding: 1.1rem; }
+    .f-pipeline-scroll {
+        width: 100%;
+        overflow-x: auto;
+        overscroll-behavior-inline: contain;
+        scroll-snap-type: inline proximity;
+        padding-bottom: .75rem;
+        scrollbar-width: thin;
+        scrollbar-color: #426553 transparent;
+    }
+    .f-pipeline {
+        width: 592px;
+        grid-template-columns: repeat(5, 112px);
+        gap: .55rem;
+        padding: .15rem .05rem 0;
+    }
+    .f-pipe-node { scroll-snap-align: start; }
+    .f-pipeline::before {
+        left: 45px;
+        right: auto;
+        width: 545px;
+    }
+    .f-data-pulse { display: block; }
+    .f-team-scene {
+        min-height: 0;
+        height: 298px;
+    }
+    .f-team-stage {
+        left: 50%;
+        right: auto;
+        width: 820px;
+        height: 350px;
+        transform: translateX(-50%) scale(.85);
+        transform-origin: center top;
+    }
+    .f-team-label { left: 24px; top: 20px; }
+    .f-student-cap { left: 28%; transform: rotate(-1deg); }
+    .f-student-bun { left: 45%; transform: rotate(1deg); }
+    .f-student-wave { left: 62%; transform: rotate(-1deg); }
+    .f-dog { left: 20%; bottom: -13px; transform: scale(.53); }
+    .f-team-produce-crate {
+        right: 8%;
+        bottom: 1px;
+        transform: none;
+    }
+    .f-dog-tail {
+        left: calc(20% - 20px);
+        bottom: -16px;
+    }
+    .st-key-capture_panel,
+    .st-key-finding_panel {
+        min-height: 0;
+    }
+    .f-footer {
+        margin-top: 2.4rem;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: .2rem;
+    }
+}
+@media (max-width: 650px) {
+    .f-team-scene { height: 252px; }
+    .f-team-stage { transform: translateX(-50%) scale(.72); }
+}
+@media (max-width: 520px) {
+    .f-team-scene { height: 196px; }
+    .f-team-stage { transform: translateX(-50%) scale(.56); }
+}
+@media (max-width: 400px) {
+    .f-team-scene { height: 147px; }
+    .f-team-stage { transform: translateX(-50%) scale(.42); }
 }
 </style>
 """,
@@ -1583,6 +1782,7 @@ def init_state() -> None:
         "last_annotated": None,
         "last_detections": [],
         "last_engine": None,
+        "mobile_nav_expanded": True,
     }
     for key, value in defaults.items():
         st.session_state.setdefault(key, value)
@@ -1626,6 +1826,7 @@ def predict_freshness(image: Image.Image) -> tuple[str, float, str]:
         label, confidence = normalize_prediction(predict_image(image))
         return label, confidence, "src.predict.predict_image"
     except Exception:
+        # Deterministic visual heuristic for UI demonstrations only.
         sample = image.copy()
         sample.thumbnail((160, 160))
         pixels = list(sample.convert("RGB").getdata())
@@ -1949,11 +2150,16 @@ st.markdown(
 )
 
 with st.container(key="sticky_navigation"):
+    nav_state = "expanded" if st.session_state.mobile_nav_expanded else "collapsed"
+    st.markdown(
+        f'<div class="f-nav-state {nav_state}"></div>',
+        unsafe_allow_html=True,
+    )
     st.markdown(
         f"""
 <div class="f-proto">
     <span class="f-proto-label">Prototyp · optimiert für</span>
-    {chips}
+    <span class="f-proto-chips">{chips}</span>
 </div>
 """,
         unsafe_allow_html=True,
@@ -1991,6 +2197,13 @@ with st.container(key="sticky_navigation"):
         ):
             st.session_state.page = "team"
             st.rerun()
+    if st.button(
+        "⌃" if st.session_state.mobile_nav_expanded else "⌄",
+        key="mobile_nav_toggle",
+        help="Navigation ein- oder ausklappen",
+    ):
+        st.session_state.mobile_nav_expanded = not st.session_state.mobile_nav_expanded
+        st.rerun()
 
 
 if st.session_state.page == "analyse":
@@ -2016,7 +2229,7 @@ if st.session_state.page == "analyse":
 
     left_column, right_column = st.columns([1.04, 0.96], gap="large")
 
-    with left_column.container(border=True):
+    with left_column.container(border=True, key="capture_panel"):
         st.markdown(
             """
 <div class="f-panel-head">
@@ -2136,7 +2349,7 @@ if st.session_state.page == "analyse":
                 help="Eine neue Datei auswählen und die aktuelle Analyse ersetzen.",
             )
 
-    with right_column.container(border=True):
+    with right_column.container(border=True, key="finding_panel"):
         st.markdown(
             """
 <div class="f-panel-head">
@@ -2447,14 +2660,15 @@ if st.session_state.page == "team":
         f"""
 <div class="f-about">
     <div class="f-team-scene" aria-label="Das P-Team mit drei Studierenden und einem Schäferhund">
+      <div class="f-team-stage">
         <div class="f-team-label">Das P-Team</div>
         <div class="f-student f-student-cap">
             <div class="f-head"></div>
             <div class="f-cap"></div>
             <div class="f-body"></div>
         </div>
+        <span class="f-dog-tail"></span>
         <div class="f-dog">
-            <span class="f-dog-tail"></span>
             <span class="f-dog-ear"></span>
             <span class="f-dog-ear two"></span>
             <span class="f-dog-head"></span>
@@ -2480,14 +2694,18 @@ if st.session_state.page == "team":
         <div class="f-team-produce-crate">
             <span class="f-team-produce"></span>
         </div>
+      </div>
     </div>
     <div class="f-card">
         <h3>Das Projekt</h3>
         <p>
             Freshify wurde vom <strong>P-Team</strong>, drei Studierenden, im Rahmen der
             Lehrveranstaltung <strong>Machine Learning for Business</strong> entwickelt.
-            Im Mittelpunkt steht nicht nur ein ML-Modell, sondern die Frage, wie aus
-            technischer Erkennung ein sinnvoller und verständlicher Arbeitsablauf entsteht.
+            Im Mittelpunkt stehen die Entwicklung und das Training eines CNN-basierten
+            Bildklassifikationsmodells sowie das Verständnis seines Lernprozesses und
+            seiner Leistungsgrenzen. Ebenso wichtig ist der Business-Kontext: Freshify
+            überführt die technische Erkennung in einen nachvollziehbaren Arbeitsablauf
+            für die visuelle Qualitätsprüfung im Wareneingang.
         </p>
     </div>
     <div class="f-card">
@@ -2523,13 +2741,15 @@ if st.session_state.page == "about":
             Das CNN bewertet aktuell das Gesamtbild, YOLO liefert Produktpositionen.
             Die produktweise Crop-Verknüpfung ist als nächster Endprodukt-Schritt vorgesehen.
         </div>
-        <div class="f-pipeline">
-            <div class="f-data-pulse"></div>
-            <div class="f-pipe-node"><div class="f-pipe-visual f-input-visual"><span></span></div><div class="f-pipe-title">Eingangsbild</div><div class="f-pipe-sub">Kamera oder Galerie</div></div>
-            <div class="f-pipe-node"><div class="f-pipe-visual f-yolo-visual"></div><div class="f-pipe-title">YOLO · Prototyp</div><div class="f-pipe-sub">Findet Produkte und Bounding Boxes</div></div>
-            <div class="f-pipe-node"><div class="f-pipe-visual f-crop-visual"></div><div class="f-pipe-title">Crop · geplant</div><div class="f-pipe-sub">Schneidet jede Box für eine Einzelbewertung aus</div></div>
-            <div class="f-pipe-node"><div class="f-pipe-visual f-cnn-visual"></div><div class="f-pipe-title">CNN · Prototyp</div><div class="f-pipe-sub">Bewertet derzeit das Gesamtbild</div></div>
-            <div class="f-pipe-node"><div class="f-pipe-visual f-overlay-visual"></div><div class="f-pipe-title">Overlay · Zielbild</div><div class="f-pipe-sub">Position plus Einzelbewertung ergibt Grün oder Rot</div></div>
+        <div class="f-pipeline-scroll">
+            <div class="f-pipeline">
+                <div class="f-data-pulse"></div>
+                <div class="f-pipe-node"><div class="f-pipe-visual f-input-visual"><span></span></div><div class="f-pipe-title">Eingangsbild</div><div class="f-pipe-sub">Kamera oder Galerie</div></div>
+                <div class="f-pipe-node"><div class="f-pipe-visual f-yolo-visual"></div><div class="f-pipe-title">YOLO · Prototyp</div><div class="f-pipe-sub">Findet Produkte und Bounding Boxes</div></div>
+                <div class="f-pipe-node"><div class="f-pipe-visual f-crop-visual"></div><div class="f-pipe-title">Crop · geplant</div><div class="f-pipe-sub">Schneidet jede Box für eine Einzelbewertung aus</div></div>
+                <div class="f-pipe-node"><div class="f-pipe-visual f-cnn-visual"></div><div class="f-pipe-title">CNN · Prototyp</div><div class="f-pipe-sub">Bewertet derzeit das Gesamtbild</div></div>
+                <div class="f-pipe-node"><div class="f-pipe-visual f-overlay-visual"></div><div class="f-pipe-title">Overlay · Zielbild</div><div class="f-pipe-sub">Position plus Einzelbewertung ergibt Grün oder Rot</div></div>
+            </div>
         </div>
     </div>
     <div class="f-card">
@@ -2592,3 +2812,13 @@ if st.session_state.page == "about":
 """,
         unsafe_allow_html=True,
     )
+
+st.markdown(
+    """
+<div class="f-footer">
+    <span><strong>Freshify</strong> · Visuelle Frischeanalyse</span>
+    <span>P-Team · Machine Learning for Business</span>
+</div>
+""",
+    unsafe_allow_html=True,
+)
