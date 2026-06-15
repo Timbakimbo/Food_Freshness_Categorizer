@@ -5,8 +5,8 @@ import PIL.Image as Image
 from keras.utils import load_img, img_to_array
 
 IMG_SIZE = (224, 224)
-MODEL_PATH = "models/updated_raw_standard.keras"
-THRESHOLD = 0.35
+MODEL_PATH = "models/freshify_baseline_with_new_raw.keras"
+THRESHOLD = 0.5
 
 try:
     model = tf.keras.models.load_model(MODEL_PATH)
@@ -15,7 +15,6 @@ except Exception as e:
     print(f"Error loading model: {e}")
     sys.exit(1) 
     
-# Streamlit integration -> need a function
 def predict_image(image_path):
     try:
         if isinstance(image_path, Image.Image):
