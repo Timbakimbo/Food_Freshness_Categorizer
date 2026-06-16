@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="360" viewBox="0 0 1100 360" role="img" aria-labelledby="title desc">
+  <title id="title">Freshify Business-Case-Workflow</title>
+  <desc id="desc">Workflow vom Wareneingang über optionale Objekterkennung und Freshify-Klassifikation bis zur menschlichen Prüfung.</desc>
+  <style>
+    .bg { fill: #f6f8f6; }
+    .card { fill: #ffffff; stroke: #d9e3dc; stroke-width: 2; }
+    .title { fill: #102116; font: 700 22px Inter, Arial, sans-serif; }
+    .label { fill: #102116; font: 700 18px Inter, Arial, sans-serif; }
+    .text { fill: #53645a; font: 500 14px Inter, Arial, sans-serif; }
+    .small { fill: #6c7b72; font: 500 12px Inter, Arial, sans-serif; }
+    .arrow { stroke: #7c9184; stroke-width: 3; fill: none; marker-end: url(#arrowhead); }
+    .icon { fill: #e8f5ee; stroke: #00a962; stroke-width: 2; }
+    .accent { fill: #00a962; }
+    .danger { fill: #c9362b; }
+    .review { fill: #fff6e8; stroke: #d6923a; stroke-width: 2; }
+  </style>
+
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#7c9184" />
+    </marker>
+  </defs>
+
+  <rect class="bg" x="0" y="0" width="1100" height="360" rx="18" />
+  <text class="title" x="54" y="54">Freshify im Workflow</text>
+
+  <g transform="translate(54 96)">
+    <rect class="card" x="0" y="0" width="185" height="190" rx="12" />
+    <rect class="icon" x="54" y="28" width="78" height="56" rx="10" />
+    <circle class="accent" cx="74" cy="55" r="9" />
+    <circle class="danger" cx="101" cy="55" r="9" />
+    <path class="accent" d="M118 47c10 6 14 17 8 27-12-1-21-8-22-20 3-4 7-6 14-7z" />
+    <text class="label" x="28" y="124">1. Eingang</text>
+    <text class="text" x="28" y="151">Kiste, Band oder</text>
+    <text class="text" x="28" y="171">Einzelbild erfassen</text>
+  </g>
+
+  <path class="arrow" d="M254 190 H330" />
+
+  <g transform="translate(350 96)">
+    <rect class="card" x="0" y="0" width="185" height="190" rx="12" />
+    <rect class="icon" x="48" y="26" width="90" height="62" rx="8" />
+    <rect x="63" y="38" width="26" height="22" rx="4" fill="#ffffff" stroke="#00a962" stroke-width="2" />
+    <rect x="96" y="50" width="25" height="24" rx="4" fill="#ffffff" stroke="#c9362b" stroke-width="2" />
+    <text class="small" x="57" y="105">optional</text>
+    <text class="label" x="26" y="132">2. Crop</text>
+    <text class="text" x="26" y="158">Objekte erkennen</text>
+    <text class="text" x="26" y="178">und ausschneiden</text>
+  </g>
+
+  <path class="arrow" d="M550 190 H626" />
+
+  <g transform="translate(646 96)">
+    <rect class="card" x="0" y="0" width="185" height="190" rx="12" />
+    <circle class="icon" cx="92" cy="57" r="34" />
+    <path class="accent" d="M78 58l10 10 21-27 9 7-29 37-20-20z" />
+    <text class="label" x="24" y="124">3. Freshify</text>
+    <text class="text" x="24" y="151">edible oder</text>
+    <text class="text" x="24" y="171">non_edible</text>
+  </g>
+
+  <path class="arrow" d="M846 190 H922" />
+
+  <g transform="translate(942 96)">
+    <rect class="review" x="0" y="0" width="105" height="190" rx="12" />
+    <circle cx="52" cy="52" r="28" fill="#fffaf0" stroke="#d6923a" stroke-width="2" />
+    <path d="M39 56l9 9 20-27" fill="none" stroke="#9b5a13" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" />
+    <text class="label" x="19" y="124">4. Review</text>
+    <text class="text" x="18" y="151">Mensch</text>
+    <text class="text" x="18" y="171">prüft final</text>
+  </g>
+
+  <text class="small" x="54" y="322">Das Modell priorisiert auffällige Fälle. Die finale Entscheidung bleibt beim Menschen.</text>
+</svg>

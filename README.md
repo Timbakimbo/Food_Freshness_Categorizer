@@ -8,7 +8,7 @@ Forschungsfrage: Kann ein leichtgewichtiges MobileNetV2-Transfer-Learning-Modell
 
 Freshify ist als Assistenzsystem für die Vorsortierung im Tafel-/Wareneingang-Kontext gedacht. Das Modell trifft keine finale Wegwerfentscheidung, sondern markiert auffällige Lebensmittel für eine anschließende menschliche Prüfung. In diesem Human-in-the-loop-Setup sind übersehene verdorbene Lebensmittel kritischer als unnötig markierte essbare Lebensmittel. Perspektivisch kann eine Object-Detection-Stufe einzelne Lebensmittel erkennen und als Crops an den Classifier übergeben.
 
-![TODO: Business-Case-Workflow: Bildaufnahme, optionaler Crop, Klassifikation, Human Review](docs/images/placeholder.png)
+![Business-Case-Workflow: Bildaufnahme, optionaler Crop, Klassifikation, Human Review](docs/images/business_case_workflow.svg)
 
 ## Kurzüberblick
 
