@@ -1,4 +1,5 @@
 import os
+import numpy as np
 import PIL.Image as Image
 from operator import itemgetter
 from predict import predict_image
@@ -22,8 +23,45 @@ class ObjectDetector:
                     # Generate the actual window and yield it for predict.py
                     yield (x, y, win_w, win_h)
 
-    #TODO: Hinzufügen von 
-    # 1.) Extrahieren der Features bei jedem CROP 
+    def feature_hog_extractor(self, image: Image.Image, cell: int = 8, bins: int = 9):
+        """A simple method (HOG) for a single CROP. """
+        gray_image = np.array(image.convert('L'), dtype=np.float32)
+        
+        # Gradient in X & Y
+        gx = np.zeros_like(gray_image)
+        gy = np.zeros_like(gray_image)
+        
+        gx[:, 1:-1] = gray_image[:, 2:] - gray_image[:, :-2]
+        gy[1:-1, :] = gray_image[2, :] - gray_image[-2, :]
+        
+        # Stärke und Richtung definieren
+        magnitude = np.sqrt(gx**2 + gy**2)
+        angle = np.degrees(np.arctan2(gy, gx))
+        angle = np.mod(angle, 180)
+        
+        # Histogramme pro Cell
+        features = []
+        bin_width = 180 / bins
+
+        h, w = gray_image.shape
+
+        # Bild in Cells aufteilen
+        for y in range(0, h - cell + 1, cell):
+            for x in range(0, w - cell + 1, cell):
+
+                hist = np.zeros(bins, dtype=np.float32)
+
+                cell_mag = magnitude[y:y + cell, x:x + cell]
+                cell_ang = angle[y:y + cell, x:x + cell]
+
+                for mag, ang in zip(cell_mag.ravel(), cell_ang.ravel()):
+                    bin_idx = min(int(ang // bin_width), bins - 1)
+                    hist[bin_idx] += mag # Starke Kanten bevorzugen
+
+                features.extend(hist)
+
+        return np.asarray(features, dtype=np.float32)
+
     # 2.) Überlappende CROPS wegwerfen (Vorfiltern)
     # 3.) Prüfen ob ein CROP überhaupt für prediction in Frage kommt mit einem Classifier oder iwas statistisches (Konsinus-Ähnlichkeit) ?!?
     def detect_objects(self, image: Image.Image) -> list[dict]:
@@ -37,7 +75,12 @@ class ObjectDetector:
 
             tmp_path = "/tmp/crop.jpg"
             crop.save(tmp_path)
-
+            
+            # 1.) Extrahieren der Features bei jedem CROP 
+            hog_feature = self.feature_hog_extractor(crop)
+            print(f"HOG-Shape: {hog_feature.shape}")
+            print(f"HOG-Mean: {hog_feature.mean():.2f}")
+            
             label, confidence, _ = predict_image(tmp_path)
             detections.append({
                 "label": label,
