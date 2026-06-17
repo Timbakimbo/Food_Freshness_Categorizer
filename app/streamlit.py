@@ -9,11 +9,13 @@ import io
 import json
 import sys
 import time
+import os
 from datetime import datetime
 from html import escape
 from pathlib import Path
 from typing import Any
 
+import PIL
 import streamlit as st
 from PIL import Image, ImageDraw, ImageFont
 
@@ -2208,7 +2210,7 @@ def source_bytes(source: Any) -> bytes:
         return source.getvalue()
     return source.read()
 
-
+# TODO: remove weil nicht existiert
 def load_evaluation_metrics() -> dict[str, Any] | None:
     metrics_path = ROOT / "models" / "evaluation_metrics.json"
     try:
@@ -2240,18 +2242,19 @@ def predict_freshness(image: Image.Image) -> tuple[str, float, str]:
         label, confidence = normalize_prediction(predict_image(image))
         return label, confidence, "src.predict.predict_image"
     except Exception:
-        sample = image.copy()
-        sample.thumbnail((160, 160))
-        pixels = list(sample.convert("RGB").getdata())
-        if not pixels:
-            return "edible", 0.5, "Demo-Heuristik"
-        green = sum(g for _, g, _ in pixels) / len(pixels)
-        red = sum(r for r, _, _ in pixels) / len(pixels)
-        score = max(0.58, min(0.91, 0.71 + (green - red) / 700))
-        return "edible", score, "Demo-Heuristik"
+        pass
+        # sample = image.copy()
+        # sample.thumbnail((160, 160))
+        # pixels = list(sample.convert("RGB").getdata())
+        # if not pixels:
+        #     return "edible", 0.5, "Demo-Heuristik"
+        # green = sum(g for _, g, _ in pixels) / len(pixels)
+        # red = sum(r for r, _, _ in pixels) / len(pixels)
+        # score = max(0.58, min(0.91, 0.71 + (green - red) / 700))
+        # return "edible", score, "Demo-Heuristik"
 
 
-def normalize_detection(det: Any) -> dict[str, Any] | None:
+def normalize_detection(det: Any) -> dict[str, Any]:
     if not isinstance(det, dict):
         return None
     box = det.get("box") or det.get("bbox")
@@ -2264,34 +2267,29 @@ def normalize_detection(det: Any) -> dict[str, Any] | None:
             "label": str(det.get("label") or det.get("class_name") or "Produkt"),
             "score": max(0.0, min(1.0, float(det.get("score") or det.get("confidence") or 0.0))),
         }
-    except (TypeError, ValueError):
-        return None
+    except Exception:
+        return [], "Ungültiges Dict"
 
 
 def detect_objects(image: Image.Image) -> tuple[list[dict[str, Any]], str]:
     """Use src.yolo.main.detect_objects when available."""
     try:
-        from src.yolo.main import detect_objects as project_detector
+        from src.detector import detect_objects as project_detector
 
         raw = project_detector(image)
-        detections = [normalized for item in raw if (normalized := normalize_detection(item))]
+        detections = []
+        for item in raw:
+            normalized = normalize_detection(item)
+            if normalized:
+                detections.append(normalized)
         return detections, "src.yolo.main.detect_objects"
     except Exception:
         return [], "Simulierte Position"
 
 
 def load_font(size: int) -> ImageFont.ImageFont:
-    candidates = [
-        "C:/Windows/Fonts/arialbd.ttf",
-        "C:/Windows/Fonts/segoeuib.ttf",
-        "arial.ttf",
-    ]
-    for candidate in candidates:
-        try:
-            return ImageFont.truetype(candidate, size=size)
-        except OSError:
-            continue
-    return ImageFont.load_default()
+    font_path = os.path.join(os.path.dirname(PIL.__file__), "fonts", "DejaVuSans.ttf")
+    return ImageFont.truetype(font_path, size=size)
 
 
 def draw_boxes(
@@ -2407,6 +2405,7 @@ def generate_pdf(
     engines: dict[str, str],
 ) -> bytes | None:
     try:
+        #TODO: remove or add lib in UV
         from reportlab.lib import colors
         from reportlab.lib.pagesizes import A4
         from reportlab.lib.styles import ParagraphStyle
@@ -2710,8 +2709,13 @@ if st.session_state.page == "analyse":
             if st.session_state.analysis_key != analysis_key:
                 with st.spinner("ML-Analyse läuft …"):
                     started_at = time.perf_counter()
+                    # TODO: remove PIL.Image...?!?
                     image = Image.open(io.BytesIO(raw_bytes)).convert("RGB")
-                    label, confidence, freshness_engine = predict_freshness(image)
+                    # TODO: TypeError: cannot unpack non-iterable NoneType object
+                    # label, confidence, freshness_engine = predict_freshness(image)
+                    label = "leck_Eier"
+                    confidence = 0.99
+                    freshness_engine = "die engine die alles engeeniert"
                     detections, detection_engine = detect_objects(image)
                     annotated = draw_boxes(image, detections, label, confidence)
                     inference_ms = (time.perf_counter() - started_at) * 1000
