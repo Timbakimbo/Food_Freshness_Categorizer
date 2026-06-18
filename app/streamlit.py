@@ -2210,11 +2210,10 @@ def source_bytes(source: Any) -> bytes:
         return source.getvalue()
     return source.read()
 
-# TODO: remove weil nicht existiert
 def load_evaluation_metrics() -> dict[str, Any] | None:
     metrics_path = ROOT / "models" / "evaluation_metrics.json"
     try:
-        return json.loads(metrics_path.read_text(encoding="utf-8"))
+        return None
     except (OSError, json.JSONDecodeError):
         return None
 
@@ -2394,7 +2393,6 @@ def result_copy(label: str, confidence: float) -> tuple[str, str, str, str]:
         "Empfehlung: Charge separieren und Sicht- sowie Geruchskontrolle durchführen.",
     )
 
-
 def generate_pdf(
     report_id: str,
     timestamp: str,
@@ -2405,22 +2403,10 @@ def generate_pdf(
     engines: dict[str, str],
 ) -> bytes | None:
     try:
-        #TODO: remove or add lib in UV
-        from reportlab.lib import colors
-        from reportlab.lib.pagesizes import A4
-        from reportlab.lib.styles import ParagraphStyle
-        from reportlab.lib.units import mm
-        from reportlab.platypus import (
-            Image as ReportImage,
-            Paragraph,
-            SimpleDocTemplate,
-            Spacer,
-            Table,
-            TableStyle,
-        )
+        None
     except ImportError:
         return None
-
+    return None
     buffer = io.BytesIO()
     document = SimpleDocTemplate(
         buffer,

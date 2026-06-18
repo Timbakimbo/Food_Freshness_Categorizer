@@ -45,6 +45,8 @@ Voraussetzung: `uv` ist installiert. Installation siehe https://docs.astral.sh/u
 Setup:
 
 ```bash
+uv pip install torch torchvision
+uv pip install git+https://github.com/ChaoningZhang/MobileSAM.git
 uv sync
 ```
 
