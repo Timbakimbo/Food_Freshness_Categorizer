@@ -4,6 +4,8 @@ Binäres Bildklassifikationsprojekt zur Bewertung von Lebensmittelbildern als `e
 
 Forschungsfrage: Kann ein leichtgewichtiges MobileNetV2-Transfer-Learning-Modell Obst- und Gemüsebilder zuverlässig als essbar oder nicht mehr essbar klassifizieren?
 
+Hier gehts zur [Demo](https://freshify.streamlit.app/) der Anwendung.
+
 ## Business Case
 
 Freshify ist als Assistenzsystem für die Vorsortierung im Tafel-/Wareneingang-Kontext gedacht. Das Modell trifft keine finale Wegwerfentscheidung, sondern markiert auffällige Lebensmittel für eine anschließende menschliche Prüfung. Im Standardworkflow wird das Gesamtbild als `edible` oder `non_edible` klassifiziert. Optional kann ein Detailmodus Produktbereiche segmentieren und als Overlay anzeigen (Preview).

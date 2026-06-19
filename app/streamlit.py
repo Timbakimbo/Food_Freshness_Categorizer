@@ -9,6 +9,7 @@ import io
 import json
 import sys
 import time
+import os
 from datetime import datetime
 from html import escape
 from pathlib import Path
@@ -16,6 +17,7 @@ from typing import Any
 
 import PIL
 import streamlit as st
+import streamlit.components.v1 as components
 from PIL import Image, ImageDraw, ImageFont, ImageOps
 
 
@@ -379,7 +381,7 @@ div[data-testid="stLayoutWrapper"]:has(> .st-key-sticky_navigation) {
 .f-result-copy { margin-top: .25rem; color: var(--muted); font-size: .8rem; line-height: 1.55; }
 
 .f-metrics {
-    margin-top: .75rem;
+    margin-top: 2.5rem;
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: .6rem;
@@ -531,8 +533,8 @@ div[data-testid="stLayoutWrapper"]:has(> .st-key-sticky_navigation) {
 }
 .f-safety-copy { min-width: 0; }
 .f-awaiting {
-    min-height: 270px;
-    margin-top: .9rem;
+    min-height: 345px;
+    margin-top: 6.4rem;
     display: grid;
     place-items: center;
     padding: 1.4rem;
@@ -762,6 +764,83 @@ div[data-testid="stLayoutWrapper"]:has(> .st-key-sticky_navigation) {
     font-weight: 700 !important;
     box-shadow: 0 8px 20px rgba(11,23,16,.15) !important;
 }
+[data-testid="stFileUploader"] section button * {
+    color: inherit !important;
+}
+[data-testid="stFileChips"] {
+    width: 100%;
+    margin-top: .85rem;
+}
+[data-testid="stFileChips"] > div {
+    display: flex;
+    align-items: center;
+    gap: .55rem;
+}
+[data-testid="stFileChip"] {
+    min-height: 46px;
+    padding: .45rem .5rem .45rem .65rem !important;
+    border: 1px solid var(--border) !important;
+    border-radius: var(--radius-sm) !important;
+    background: rgba(255,255,255,.86) !important;
+    color: var(--ink) !important;
+    box-shadow: 0 3px 10px rgba(8,24,15,.05);
+}
+[data-testid="stFileChip"] svg {
+    color: var(--green-dark) !important;
+    fill: currentColor !important;
+}
+[data-testid="stFileChipName"] {
+    color: var(--ink) !important;
+    font-size: .78rem !important;
+    font-weight: 750 !important;
+}
+[data-testid="stFileChip"] [class*="e1dmul8p8"] {
+    color: var(--muted) !important;
+    font-size: .68rem !important;
+    font-weight: 650 !important;
+}
+[data-testid="stFileChipDeleteBtn"] button,
+[data-testid="stBaseButton-borderlessIcon"] {
+    min-width: 34px !important;
+    width: 34px !important;
+    min-height: 34px !important;
+    height: 34px !important;
+    padding: 0 !important;
+    display: grid !important;
+    place-items: center !important;
+    border: 1px solid transparent !important;
+    border-radius: 9px !important;
+    background: transparent !important;
+    color: var(--muted) !important;
+    box-shadow: none !important;
+}
+[data-testid="stFileChipDeleteBtn"] button:hover,
+[data-testid="stFileChipDeleteBtn"] button:focus,
+[data-testid="stFileChipDeleteBtn"] button:active,
+[data-testid="stBaseButton-borderlessIcon"]:hover,
+[data-testid="stBaseButton-borderlessIcon"]:focus,
+[data-testid="stBaseButton-borderlessIcon"]:active {
+    border-color: transparent !important;
+    background: transparent !important;
+    color: var(--ink) !important;
+    outline: none !important;
+    box-shadow: none !important;
+}
+[data-testid="stFileChipDeleteBtn"] button:hover > div,
+[data-testid="stFileChipDeleteBtn"] button:focus > div,
+[data-testid="stFileChipDeleteBtn"] button:active > div,
+[data-testid="stBaseButton-borderlessIcon"]:hover > div,
+[data-testid="stBaseButton-borderlessIcon"]:focus > div,
+[data-testid="stBaseButton-borderlessIcon"]:active > div,
+[data-testid="stBaseButton-borderlessIcon"] [data-testid="stMarkdownContainer"],
+[data-testid="stBaseButton-borderlessIcon"] span {
+    background: transparent !important;
+}
+[data-testid="stFileChipDeleteBtn"] button *,
+[data-testid="stBaseButton-borderlessIcon"] * {
+    color: inherit !important;
+    fill: currentColor !important;
+}
 [data-testid="stCameraInput"] {
     min-height: 345px;
     padding: 2rem;
@@ -875,6 +954,70 @@ input:focus, textarea:focus {
     background: var(--green) !important;
     color: white !important;
 }
+[data-testid="stElementToolbar"] {
+    display: none !important;
+}
+[data-testid="stImage"],
+[data-testid="stJson"] {
+    position: relative;
+}
+.f-fullscreen-target {
+    position: relative;
+}
+.f-fullscreen-toggle {
+    position: absolute;
+    top: .55rem;
+    right: .55rem;
+    z-index: 20;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    display: grid;
+    place-items: center;
+    border: 1px solid rgba(220,231,224,.92);
+    border-radius: 8px;
+    background: rgba(255,255,255,.94);
+    color: var(--ink);
+    box-shadow: 0 5px 15px rgba(8,24,15,.10);
+    cursor: pointer;
+    transition: background .15s ease, color .15s ease, border-color .15s ease;
+}
+.f-fullscreen-toggle:hover,
+.f-fullscreen-toggle:focus-visible {
+    border-color: #c7d8ce;
+    background: white;
+    color: var(--green-dark);
+    outline: none;
+}
+.f-fullscreen-toggle::before,
+.f-fullscreen-toggle::after {
+    content: "";
+    position: absolute;
+    box-sizing: border-box;
+}
+.f-fullscreen-toggle::before {
+    width: 13px;
+    height: 13px;
+    border: 2px solid currentColor;
+    border-radius: 3px;
+}
+.f-fullscreen-toggle::after {
+    width: 5px;
+    height: 5px;
+    border-radius: 1px;
+    background: currentColor;
+}
+.f-fullscreen-target:fullscreen {
+    padding: 1.25rem;
+    display: grid;
+    place-items: center;
+    background: var(--canvas);
+}
+.f-fullscreen-target:fullscreen img,
+.f-fullscreen-target:fullscreen [data-testid="stJson"] {
+    max-width: min(96vw, 1400px);
+    max-height: 92vh;
+}
 [data-testid="stExpander"] {
     border-color: var(--border) !important;
     border-radius: var(--radius-sm) !important;
@@ -899,12 +1042,65 @@ input:focus, textarea:focus {
     stroke: currentColor !important;
 }
 [data-testid="stJson"] {
-    background: #fbfdfc !important;
+    width: 100%;
+    margin-top: .35rem;
+    padding: .85rem .95rem;
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: linear-gradient(145deg, #fbfdfc, #f0f5f2) !important;
     color: var(--ink) !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.72);
 }
 [data-testid="stJson"] *,
 [data-testid="stCodeBlock"] *,
 pre, code {
+    color: var(--ink) !important;
+}
+[data-testid="stJson"] .pretty-json-container,
+[data-testid="stJson"] .object-container,
+[data-testid="stJson"] .object-content,
+[data-testid="stJson"] .pushed-content {
+    background: transparent !important;
+}
+[data-testid="stJson"] .variable-row,
+[data-testid="stJson"] .object-key-val {
+    border-left-color: #cfe0d6 !important;
+}
+[data-testid="stJson"] .object-key,
+[data-testid="stJson"] .brace-row span {
+    color: var(--green-dark) !important;
+    font-weight: 750 !important;
+}
+[data-testid="stJson"] .variable-value,
+[data-testid="stJson"] .string-value {
+    color: var(--ink) !important;
+}
+[data-testid="stJson"] .variable-value > div {
+    color: var(--green-dark) !important;
+}
+[data-testid="stJson"] .icon-container svg,
+[data-testid="stJson"] .expanded-icon svg,
+[data-testid="stJson"] .collapsed-icon svg,
+[data-testid="stJson"] .copy-icon svg {
+    color: var(--green-dark) !important;
+    fill: currentColor !important;
+}
+[data-testid="stJson"] [style*="background-color"] {
+    border: 1px solid #d8e6de !important;
+    background-color: #eaf7f0 !important;
+    color: var(--green-dark) !important;
+}
+[data-testid="stCodeBlock"],
+pre {
+    overflow-x: auto;
+    border: 1px solid var(--border) !important;
+    border-radius: var(--radius-sm) !important;
+    background: #fbfdfc !important;
+}
+code {
+    border-radius: 5px;
+    background: #eaf2ed !important;
     color: var(--ink) !important;
 }
 
@@ -1302,15 +1498,15 @@ pre, code {
     border-radius: 10px;
     background: #193b2a;
 }
-.f-sam-visual::before,
-.f-sam-visual::after {
+.f-yolo-visual::before,
+.f-yolo-visual::after {
     content: "";
     position: absolute;
     border: 1.5px solid #58e39b;
     animation: f-box-pop 2s ease-in-out infinite;
 }
-.f-sam-visual::before { inset: 7px 16px 14px 5px; }
-.f-sam-visual::after { inset: 16px 5px 5px 18px; animation-delay: .35s; }
+.f-yolo-visual::before { inset: 7px 16px 14px 5px; }
+.f-yolo-visual::after { inset: 16px 5px 5px 18px; animation-delay: .35s; }
 .f-input-visual::before {
     content: "";
     position: absolute;
@@ -1340,12 +1536,12 @@ pre, code {
     border-radius: 50%;
     background: #a7e9c8;
 }
-.f-detail-visual::before {
+.f-crop-visual::before {
     content: "";
     position: absolute;
     inset: 9px;
     border: 2px solid #58e39b;
-    animation: f-detail-zoom 2s ease-in-out infinite;
+    animation: f-crop-zoom 2s ease-in-out infinite;
 }
 .f-cnn-visual {
     background:
@@ -1369,7 +1565,7 @@ pre, code {
 .f-overlay-visual::before { left: 5px; top: 9px; }
 .f-overlay-visual::after { right: 5px; bottom: 7px; border-color: #ef746b; }
 @keyframes f-box-pop { 0%,100% { opacity:.35; transform:scale(.85); } 50% { opacity:1; transform:scale(1); } }
-@keyframes f-detail-zoom { 0%,100% { inset:12px; } 50% { inset:5px; } }
+@keyframes f-crop-zoom { 0%,100% { inset:12px; } 50% { inset:5px; } }
 @keyframes f-neural-pulse { 0%,100% { filter:brightness(.85); } 50% { filter:brightness(1.45); } }
 .f-pipe-title { font-size: .7rem; font-weight: 750; }
 .f-pipe-sub { margin-top: .18rem; color: #829c8e; font-size: .58rem; line-height: 1.35; }
@@ -1836,7 +2032,10 @@ pre, code {
         min-height: 265px !important;
         padding: 1.25rem !important;
     }
-    .f-awaiting { min-height: 235px; }
+    .f-awaiting {
+        min-height: 265px;
+        margin-top: 5.8rem;
+    }
     .f-uploaded-frame [data-testid="stImage"] {
         min-height: 280px;
     }
@@ -1932,6 +2131,10 @@ pre, code {
     [data-testid="stCameraInput"],
     .f-uploaded-frame [data-testid="stImage"] {
         min-height: 300px !important;
+    }
+    .f-awaiting {
+        min-height: 300px;
+        margin-top: .9rem;
     }
     .f-uploaded-frame [data-testid="stImage"] img {
         height: 300px;
@@ -2066,6 +2269,9 @@ pre, code {
     .f-uploaded-frame [data-testid="stImage"] {
         min-height: 245px !important;
         padding: 1.1rem !important;
+    }
+    .f-awaiting {
+        min-height: 245px;
     }
     .f-uploaded-frame [data-testid="stImage"] img {
         height: 245px;
@@ -2288,6 +2494,53 @@ pre, code {
     unsafe_allow_html=True,
 )
 
+components.html(
+    """
+<script>
+(() => {
+    const doc = window.parent.document;
+
+    const makeButton = () => {
+        const button = doc.createElement("button");
+        button.type = "button";
+        button.className = "f-fullscreen-toggle";
+        button.setAttribute("aria-label", "Vollbild umschalten");
+        button.setAttribute("title", "Vollbild");
+        button.addEventListener("click", (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+
+            const target = button.closest(".f-fullscreen-target");
+            if (!target) return;
+
+            if (doc.fullscreenElement === target) {
+                doc.exitFullscreen?.();
+            } else {
+                target.requestFullscreen?.();
+            }
+        });
+        return button;
+    };
+
+    const install = () => {
+        doc.querySelectorAll('[data-testid="stImage"], [data-testid="stJson"]').forEach((target) => {
+            if (target.querySelector(":scope > .f-fullscreen-toggle")) return;
+            target.classList.add("f-fullscreen-target");
+            target.appendChild(makeButton());
+        });
+    };
+
+    install();
+    if (!window.__freshifyFullscreenObserver) {
+        window.__freshifyFullscreenObserver = new MutationObserver(install);
+        window.__freshifyFullscreenObserver.observe(doc.body, { childList: true, subtree: true });
+    }
+})();
+</script>
+""",
+    height=0,
+)
+
 
 def init_state() -> None:
     defaults = {
@@ -2423,6 +2676,20 @@ def analyze_segments(image: Image.Image) -> tuple[list[dict[str, Any]], Image.Im
         return [], None, {"masken_gesamt": 0, "gueltige_masken": 0, "objekte": 0}, "Detailmodus nicht verfügbar"
 
 
+def crop_detection(image: Image.Image, detection: dict[str, Any]) -> Image.Image | None:
+    width, height = image.size
+    try:
+        x1, y1, x2, y2 = [int(value) for value in detection["box"]]
+    except (KeyError, TypeError, ValueError):
+        return None
+
+    x1, x2 = sorted((max(0, x1), min(width - 1, x2)))
+    y1, y2 = sorted((max(0, y1), min(height - 1, y2)))
+    if x2 <= x1 or y2 <= y1:
+        return None
+    return image.crop((x1, y1, x2, y2))
+
+
 def analyze_image(
     image: Image.Image,
     detail_mode: bool = False,
@@ -2451,23 +2718,18 @@ def analyze_image(
 
 
 def load_font(size: int) -> ImageFont.ImageFont:
-    candidates = [
+    font_candidates = [
         Path(PIL.__file__).resolve().parent / "fonts" / "DejaVuSans.ttf",
         Path("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"),
         Path("/usr/share/fonts/dejavu/DejaVuSans.ttf"),
     ]
-    for font_path in candidates:
-        if not font_path.exists():
-            continue
-        try:
-            return ImageFont.truetype(str(font_path), size=size)
-        except OSError:
-            continue
-
-    try:
-        return ImageFont.truetype("DejaVuSans.ttf", size=size)
-    except OSError:
-        return ImageFont.load_default(size=size)
+    for font_path in font_candidates:
+        if font_path.exists():
+            try:
+                return ImageFont.truetype(str(font_path), size=size)
+            except OSError:
+                pass
+    return ImageFont.load_default()
 
 
 def draw_boxes(
@@ -2575,6 +2837,141 @@ def result_copy(label: str, confidence: float) -> tuple[str, str, str, str]:
         f"Mögliche Verderbnismerkmale erkannt. ML-Konfidenz: {percentage}.",
         "Empfehlung: Charge separieren und Sicht- sowie Geruchskontrolle durchführen.",
     )
+
+def generate_pdf(
+    report_id: str,
+    timestamp: str,
+    label: str,
+    confidence: float,
+    annotated_image: Image.Image,
+    detections: list[dict[str, Any]],
+    engines: dict[str, str],
+) -> bytes | None:
+    try:
+        pass
+    except ImportError:
+        return None
+    return None
+    buffer = io.BytesIO()
+    document = SimpleDocTemplate(
+        buffer,
+        pagesize=A4,
+        leftMargin=22 * mm,
+        rightMargin=22 * mm,
+        topMargin=18 * mm,
+        bottomMargin=20 * mm,
+    )
+    ink = colors.HexColor("#0B1710")
+    green = colors.HexColor("#00A962")
+    red = colors.HexColor("#C9362B")
+    muted = colors.HexColor("#53645A")
+    soft = colors.HexColor("#F0F5F2")
+    border = colors.HexColor("#DCE7E0")
+    verdict_color = green if label == "edible" else red
+
+    styles = {
+        "brand": ParagraphStyle(
+            "brand", fontName="Helvetica-Bold", fontSize=16, leading=20,
+            textColor=green, spaceAfter=5
+        ),
+        "title": ParagraphStyle(
+            "title", fontName="Helvetica-Bold", fontSize=18, leading=23,
+            textColor=ink, spaceAfter=8
+        ),
+        "meta": ParagraphStyle(
+            "meta", fontName="Helvetica", fontSize=8, leading=12,
+            textColor=muted, spaceAfter=5
+        ),
+        "label": ParagraphStyle(
+            "label",
+            fontName="Helvetica-Bold",
+            fontSize=7,
+            textColor=muted,
+            spaceBefore=16,
+            spaceAfter=8,
+        ),
+        "verdict": ParagraphStyle(
+            "verdict", fontName="Helvetica-Bold", fontSize=13, leading=18,
+            textColor=verdict_color, spaceAfter=6
+        ),
+        "body": ParagraphStyle(
+            "body", fontName="Helvetica", fontSize=8.5, leading=14,
+            textColor=muted, spaceAfter=5
+        ),
+    }
+
+    story = [
+        Paragraph("freshify", styles["brand"]),
+        Paragraph("Qualitätsprotokoll Wareneingang", styles["title"]),
+        Paragraph(
+            f"Protokoll-ID: <b>{escape(report_id)}</b> · {escape(timestamp)} · v{APP_VERSION}",
+            styles["meta"],
+        ),
+        Spacer(1, 12),
+        Paragraph("BEFUND", styles["label"]),
+        Paragraph(
+            "Visuell verwertbar" if label == "edible" else "Manuelle Kontrolle erforderlich",
+            styles["verdict"],
+        ),
+        Paragraph(f"ML-Konfidenz: <b>{confidence:.0%}</b>", styles["body"]),
+        Spacer(1, 5),
+        Paragraph("ANALYSE-OVERLAY", styles["label"]),
+    ]
+
+    image_buffer = io.BytesIO(image_bytes(annotated_image))
+    story.extend(
+        [
+            ReportImage(image_buffer, width=130 * mm, height=97.5 * mm, kind="proportional"),
+            Spacer(1, 10),
+            Paragraph("ANALYSEDATEN", styles["label"]),
+        ]
+    )
+
+    rows = [
+        ["Feld", "Wert"],
+        ["Protokoll-ID", report_id],
+        ["ML-Klasse", label],
+        ["ML-Konfidenz", f"{confidence:.4f}"],
+        ["Erkannte Objekte", str(len(detections)) if detections else "1 (Demo)"],
+        ["Frischemodell", engines.get("freshness", "–")],
+        ["Detailmodus", engines.get("detection", "–")],
+        ["Zeitpunkt", timestamp],
+        ["App-Version", APP_VERSION],
+    ]
+    table = Table(rows, colWidths=[52 * mm, 114 * mm])
+    table.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (-1, 0), soft),
+                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                ("FONTNAME", (0, 1), (0, -1), "Helvetica-Bold"),
+                ("TEXTCOLOR", (0, 0), (-1, -1), muted),
+                ("TEXTCOLOR", (0, 1), (0, -1), ink),
+                ("FONTSIZE", (0, 0), (-1, -1), 8.5),
+                ("GRID", (0, 0), (-1, -1), 0.4, border),
+                ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, soft]),
+                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                ("TOPPADDING", (0, 0), (-1, -1), 8),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+                ("LEFTPADDING", (0, 0), (-1, -1), 7),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 7),
+            ]
+        )
+    )
+    story.extend(
+        [
+            table,
+            Spacer(1, 18),
+            Paragraph(
+                "Automatisierte visuelle ML-Analyse. Geruch, Kerntemperatur und "
+                "mikrobiologische Belastung sind separat zu prüfen. Freshify unterstützt "
+                "die Qualitätskontrolle, ersetzt sie aber nicht.",
+                styles["body"],
+            ),
+        ]
+    )
+    document.build(story)
+    return buffer.getvalue()
 
 
 chips = "".join(
@@ -3012,13 +3409,35 @@ if st.session_state.page == "analyse":
             }
 
             st.markdown('<div class="f-section-label">Export</div>', unsafe_allow_html=True)
-            st.download_button(
-                "JSON herunterladen",
-                data=json.dumps(report_data, ensure_ascii=False, indent=2).encode("utf-8"),
-                file_name=f"freshify_{report_id}.json",
-                mime="application/json",
-                use_container_width=True,
+            export_pdf, export_json = st.columns(2)
+            pdf_bytes = generate_pdf(
+                report_id,
+                timestamp,
+                label,
+                confidence,
+                annotated,
+                detections,
+                engines,
             )
+            with export_pdf:
+                if pdf_bytes:
+                    st.download_button(
+                        "PDF herunterladen",
+                        data=pdf_bytes,
+                        file_name=f"freshify_{report_id}.pdf",
+                        mime="application/pdf",
+                        use_container_width=True,
+                    )
+                else:
+                    st.button("PDF nicht verfügbar", disabled=True, use_container_width=True)
+            with export_json:
+                st.download_button(
+                    "JSON herunterladen",
+                    data=json.dumps(report_data, ensure_ascii=False, indent=2).encode("utf-8"),
+                    file_name=f"freshify_{report_id}.json",
+                    mime="application/json",
+                    use_container_width=True,
+                )
 
             with st.expander("Technische Rohdaten"):
                 st.json(report_data)
@@ -3381,8 +3800,8 @@ if st.session_state.page == "about":
             <div class="f-data-pulse"></div>
             <div class="f-pipe-node"><div class="f-pipe-visual f-input-visual"><span></span></div><div class="f-pipe-title">Eingangsbild</div><div class="f-pipe-sub">Kamera oder Galerie</div></div>
             <div class="f-pipe-node"><div class="f-pipe-visual f-cnn-visual"></div><div class="f-pipe-title">Freshify · Standard</div><div class="f-pipe-sub">Bewertet das Gesamtbild</div></div>
-            <div class="f-pipe-node"><div class="f-pipe-visual f-sam-visual"></div><div class="f-pipe-title">SAM · optional</div><div class="f-pipe-sub">Segmentiert Produktbereiche</div></div>
-            <div class="f-pipe-node"><div class="f-pipe-visual f-detail-visual"></div><div class="f-pipe-title">Detailmodus</div><div class="f-pipe-sub">Ergänzt Boxen im Overlay</div></div>
+            <div class="f-pipe-node"><div class="f-pipe-visual f-yolo-visual"></div><div class="f-pipe-title">SAM · optional</div><div class="f-pipe-sub">Segmentiert Produktbereiche</div></div>
+            <div class="f-pipe-node"><div class="f-pipe-visual f-crop-visual"></div><div class="f-pipe-title">Detailmodus</div><div class="f-pipe-sub">Ergänzt Boxen im Overlay</div></div>
             <div class="f-pipe-node"><div class="f-pipe-visual f-overlay-visual"></div><div class="f-pipe-title">Review</div><div class="f-pipe-sub">Mensch prüft final</div></div>
         </div>
     </div>

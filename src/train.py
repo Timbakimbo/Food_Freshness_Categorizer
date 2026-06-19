@@ -71,8 +71,6 @@ model = tf.keras.Model(inputs, outputs)
 # -----------------------------
 # COMPILE
 # -----------------------------
-# TODO: Checkpoints und Fine-tuning mit Callbacks etc.
-# https://keras.io/api/callbacks/model_checkpoint/
 
 model.compile(
     optimizer="adam",
