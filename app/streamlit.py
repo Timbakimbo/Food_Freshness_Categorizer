@@ -73,6 +73,17 @@ html, body, [class*="css"] {
     -webkit-font-smoothing: antialiased;
 }
 body { background: var(--canvas); }
+.stApp,
+.block-container,
+[data-testid="stAppViewContainer"],
+[data-testid="stElementContainer"],
+[data-testid="stVerticalBlock"],
+[data-testid="stHorizontalBlock"] {
+    color: var(--ink);
+}
+.stApp [class*="st-emotion-cache"] {
+    color: inherit;
+}
 #MainMenu, footer, header { visibility: hidden; }
 [data-testid="stAppViewContainer"] {
     background:
@@ -352,6 +363,11 @@ div[data-testid="stLayoutWrapper"]:has(> .st-key-sticky_navigation) {
     place-items: center;
     border-radius: 9px;
     background: rgba(255,255,255,.74);
+    color: var(--green-dark);
+    font-weight: 800;
+}
+.f-result.risk .f-result-icon {
+    color: var(--red);
 }
 .f-result-eye {
     color: var(--subtle);
@@ -511,6 +527,7 @@ div[data-testid="stLayoutWrapper"]:has(> .st-key-sticky_navigation) {
     place-items: center;
     border-radius: 7px;
     background: #fff3dc;
+    color: #704214;
     font-weight: 800;
 }
 .f-safety-copy { min-width: 0; }
@@ -666,6 +683,10 @@ div[data-testid="stLayoutWrapper"]:has(> .st-key-sticky_navigation) {
     font-size: .8rem !important;
     font-weight: 650 !important;
 }
+[data-baseweb="tab"] *,
+[data-baseweb="tab"] p {
+    color: inherit !important;
+}
 [aria-selected="true"][data-baseweb="tab"] {
     color: var(--ink) !important;
     background: white !important;
@@ -720,6 +741,18 @@ div[data-testid="stLayoutWrapper"]:has(> .st-key-sticky_navigation) {
     color: var(--muted) !important;
     font-size: .75rem !important;
 }
+[data-testid="stFileUploader"] p,
+[data-testid="stFileUploader"] span,
+[data-testid="stCameraInput"] label,
+[data-testid="stCameraInput"] label *,
+[data-testid="stCameraInput"] p,
+[data-testid="stCameraInput"] span {
+    color: var(--ink) !important;
+}
+[data-testid="stFileUploader"] small,
+[data-testid="stCameraInput"] small {
+    color: var(--muted) !important;
+}
 [data-testid="stFileUploader"] section button {
     min-width: 180px !important;
     min-height: 44px !important;
@@ -757,10 +790,40 @@ div[data-testid="stLayoutWrapper"]:has(> .st-key-sticky_navigation) {
 [data-testid="stTextInput"] label,
 [data-testid="stNumberInput"] label,
 [data-testid="stTextArea"] label,
-[data-testid="stSelectbox"] label {
+[data-testid="stSelectbox"] label,
+[data-testid="stCheckbox"] label,
+[data-testid="stToggle"] label,
+[data-testid="stCheckbox"] p,
+[data-testid="stToggle"] p,
+[data-testid="stCheckbox"] span,
+[data-testid="stToggle"] span,
+[data-testid="stCheckbox"] div,
+[data-testid="stToggle"] div,
+[data-baseweb="checkbox"],
+[data-baseweb="checkbox"] *,
+[data-testid="stWidgetLabel"] {
     color: var(--ink) !important;
     font-size: .75rem !important;
     font-weight: 650 !important;
+}
+[data-testid="stTextInput"] label *,
+[data-testid="stNumberInput"] label *,
+[data-testid="stTextArea"] label *,
+[data-testid="stSelectbox"] label *,
+[data-testid="stCheckbox"] label *,
+[data-testid="stToggle"] label *,
+[data-testid="stCheckbox"] [class*="st-emotion-cache"],
+[data-testid="stToggle"] [class*="st-emotion-cache"],
+[data-testid="stWidgetLabel"] *,
+label[class*="st-emotion-cache"],
+label[class*="st-emotion-cache"] * {
+    color: var(--ink) !important;
+}
+[data-testid="stCheckbox"] svg,
+[data-testid="stToggle"] svg,
+[data-baseweb="checkbox"] svg {
+    color: var(--green-dark) !important;
+    fill: currentColor !important;
 }
 input, textarea, [data-baseweb="select"] > div {
     border-color: var(--border) !important;
@@ -780,14 +843,33 @@ input:focus, textarea:focus {
     font-weight: 700 !important;
     transition: transform .15s ease, box-shadow .15s ease, background .15s ease !important;
 }
+.stButton > button *,
+[data-testid="stDownloadButton"] > button * {
+    color: inherit !important;
+}
 .stButton > button:hover, [data-testid="stDownloadButton"] > button:hover {
     transform: translateY(-1px);
     box-shadow: 0 7px 18px rgba(8,24,15,.10);
+}
+.stButton > button:not([kind="primary"]) {
+    border-color: var(--border) !important;
+    background: var(--surface) !important;
+    color: var(--ink) !important;
 }
 .stButton > button[kind="primary"] {
     border-color: var(--ink) !important;
     background: var(--ink) !important;
     color: white !important;
+}
+.st-key-sticky_navigation .stButton > button:not([kind="primary"]) {
+    border-color: transparent !important;
+    background: transparent !important;
+    color: #d8e5dd !important;
+}
+.st-key-sticky_navigation .stButton > button[kind="primary"] {
+    color: #62e3a4 !important;
+    background: rgba(0,0,0,.24) !important;
+    border-color: rgba(98,227,164,.12) !important;
 }
 [data-testid="stDownloadButton"] > button {
     border-color: var(--green) !important;
@@ -797,6 +879,34 @@ input:focus, textarea:focus {
 [data-testid="stExpander"] {
     border-color: var(--border) !important;
     border-radius: var(--radius-sm) !important;
+    background: var(--surface) !important;
+    overflow: hidden;
+}
+[data-testid="stExpander"] details,
+[data-testid="stExpander"] summary {
+    background: var(--surface) !important;
+}
+[data-testid="stExpander"] summary,
+[data-testid="stExpander"] summary *,
+[data-testid="stExpander"] [data-testid="stMarkdownContainer"],
+[data-testid="stExpander"] [data-testid="stMarkdownContainer"] *,
+[data-testid="stExpander"] p,
+[data-testid="stExpander"] span,
+[data-testid="stExpander"] svg {
+    color: var(--ink) !important;
+}
+[data-testid="stExpander"] svg {
+    fill: currentColor !important;
+    stroke: currentColor !important;
+}
+[data-testid="stJson"] {
+    background: #fbfdfc !important;
+    color: var(--ink) !important;
+}
+[data-testid="stJson"] *,
+[data-testid="stCodeBlock"] *,
+pre, code {
+    color: var(--ink) !important;
 }
 
 /* Animated product stories */
@@ -2356,8 +2466,18 @@ def analyze_image(
 
 
 def load_font(size: int) -> ImageFont.ImageFont:
-    font_path = os.path.join(os.path.dirname(PIL.__file__), "fonts", "DejaVuSans.ttf")
-    return ImageFont.truetype(font_path, size=size)
+    font_candidates = [
+        Path(PIL.__file__).resolve().parent / "fonts" / "DejaVuSans.ttf",
+        Path("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"),
+        Path("/usr/share/fonts/dejavu/DejaVuSans.ttf"),
+    ]
+    for font_path in font_candidates:
+        if font_path.exists():
+            try:
+                return ImageFont.truetype(str(font_path), size=size)
+            except OSError:
+                pass
+    return ImageFont.load_default()
 
 
 def draw_boxes(
