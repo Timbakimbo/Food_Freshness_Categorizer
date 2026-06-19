@@ -218,5 +218,8 @@ __marimo__/
 
 # VSCode
 .vscode
-logs/test
-logs/detector/
+
+# Local/generated project artifacts
+.DS_Store
+logs/
+reports/

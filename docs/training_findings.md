@@ -12,10 +12,9 @@ Wir vergleichen alte und neu trainierte Modellstände für die binäre Klassifik
 Das Modell ist nicht als finale Wegwerfentscheidung gedacht, sondern als Assistenzsystem im Business-Workflow:
 
 1. Bildaufnahme oder Videoframe.
-2. Optional: Object Detection erkennt einzelne Lebensmittel.
-3. Crop pro erkanntem Objekt.
-4. Freshify-Klassifikation pro Crop.
-5. Auffällige Fälle gehen in Human Review.
+2. Freshify klassifiziert das Gesamtbild als `edible` oder `non_edible`.
+3. Optional: Der MobileSAM-Detailmodus segmentiert Produktbereiche als Overlay.
+4. Auffällige Fälle gehen in Human Review.
 
 Deshalb ist nicht nur Accuracy wichtig. Je nach Business-Priorität sind andere Metriken entscheidend.
 
@@ -113,7 +112,7 @@ Für unseren Human-in-the-loop Use Case kann ein niedriger Threshold sinnvoll se
 | Übersehen wir verdorbene Lebensmittel? | Recall `non_edible`, False Negatives `non_edible` |
 | Markieren wir zu viele gute Lebensmittel als schlecht? | False Positives `non_edible`, Recall `edible` |
 | Ist das Modell insgesamt stabil auf dem Val Set? | Validation Accuracy, beide Recalls zusammen |
-| Funktioniert es auf neuen Handyfotos? | `data/new_raw` Detection Rate, aber nur als Zusatzsignal |
+| Funktioniert es auf neuen Handyfotos? | Trefferquote auf `data/new_raw`, aber nur als Zusatzsignal |
 
 ## Business-Priorität
 
@@ -325,7 +324,7 @@ Warum es riskant ist:
 
 - `new_raw` enthält nur `non_edible`. Dadurch wird `val` einseitiger.
 - Wenn wir genau diese Bilder zur Modellentscheidung benutzen, wird daraus schnell ein Demo-Test statt ein neutraler Holdout.
-- Für Accuracy brauchen wir auch passende neue `edible` Smartphonebilder. Sonst messen wir nur Detection Rate für `non_edible`, aber keine echte Gesamt-Accuracy.
+- Für Accuracy brauchen wir auch passende neue `edible` Smartphonebilder. Sonst messen wir nur die Trefferquote für `non_edible`, aber keine echte Gesamt-Accuracy.
 
 Empfehlung:
 
@@ -515,7 +514,7 @@ Konkrete Bereinigung vor neuem Training:
 
 1. Nicht-Bild-Dateien aus `data/train` entfernen.
 2. Exakte Duplikate entfernen, besonders wenn ein Bild sowohl in `train` als auch in `val` liegt.
-3. Danach `reports/dataset_manifest.csv` neu erzeugen.
+3. Danach lokal ein neues Dataset-Manifest erzeugen.
 4. Dann Baseline ohne Augmentation neu trainieren.
 
 Durchgeführt:
@@ -523,10 +522,9 @@ Durchgeführt:
 - Nicht-Bild-Dateien entfernt.
 - Exakte Duplikate entfernt.
 - Train-Val-Duplikate entfernt.
-- `reports/dataset_manifest.csv` neu erzeugt mit 528 Bildern.
+- Dataset-Manifest neu erzeugt mit 528 Bildern.
 - Neues Baseline-Modell ohne Augmentation trainiert:
   - `models/freshify_baseline_after_data_cleanup.keras`
-  - Report: `reports/freshify_baseline_after_data_cleanup/`
 
 ## Neues Baseline-Training nach Datenbereinigung
 

@@ -1,19 +1,5 @@
-import glob
-import re
-import os
-
-def get_next_index(folder="data/yolo", prefix="output", extension="jpg"):
-    ext = extension.lstrip(".")
-    files = glob.glob(os.path.join(folder, f"{prefix}_*.{ext}"))
-    indices = []
-    for f in files:
-        match = re.search(rf"{prefix}_(\d+)\.{ext}$", os.path.basename(f))
-        if match:
-            indices.append(int(match.group(1)))
-    return max(indices, default=-1) + 1
-
-
 import matplotlib.pyplot as plt
+
 
 def plot_history(history, save_path):
     h = history.history
