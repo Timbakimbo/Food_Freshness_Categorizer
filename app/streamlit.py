@@ -2356,8 +2356,18 @@ def analyze_image(
 
 
 def load_font(size: int) -> ImageFont.ImageFont:
-    font_path = os.path.join(os.path.dirname(PIL.__file__), "fonts", "DejaVuSans.ttf")
-    return ImageFont.truetype(font_path, size=size)
+    font_candidates = [
+        Path(PIL.__file__).resolve().parent / "fonts" / "DejaVuSans.ttf",
+        Path("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"),
+        Path("/usr/share/fonts/dejavu/DejaVuSans.ttf"),
+    ]
+    for font_path in font_candidates:
+        if font_path.exists():
+            try:
+                return ImageFont.truetype(str(font_path), size=size)
+            except OSError:
+                pass
+    return ImageFont.load_default()
 
 
 def draw_boxes(
