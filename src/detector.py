@@ -150,7 +150,7 @@ class Detector:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         
         filepath = os.path.join(
-            RUN_DIR,
+            self.run_dir,
             f"{timestamp}_{name}.png"
         )
 
@@ -300,10 +300,10 @@ class Detector:
 
             print("Starting SAM segmentation...")
             masks = self.segment_everything(image)
+            print(f"Generated {len(masks)} masks")
             # DEBUG
             self.show_segments(image=image, masks=masks)
             self.show_segments_with_boxes(image=image, masks=masks) 
-            print(f"Generated {len(masks)} masks")
 
             proposals = []
             
@@ -333,14 +333,13 @@ class Detector:
                     "score": final_score,
                     "label": lable,
                 })
-                self._non_max_suppression(proposals, iou_threshold=0.25)
-                
+            
+            proposals = self._non_max_suppression(proposals, iou_threshold=0.25)
             #DEBUG:
             self.show_detections(image, proposals)
             return proposals 
 
         except Exception as e:
-
             print("\n" + "=" * 10)
             print("DETECT_OBJECTS FAILED")
             print("=" * 10)
