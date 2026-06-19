@@ -9,7 +9,6 @@ import io
 import json
 import sys
 import time
-import os
 from datetime import datetime
 from html import escape
 from pathlib import Path
@@ -1193,15 +1192,15 @@ input:focus, textarea:focus {
     border-radius: 10px;
     background: #193b2a;
 }
-.f-yolo-visual::before,
-.f-yolo-visual::after {
+.f-sam-visual::before,
+.f-sam-visual::after {
     content: "";
     position: absolute;
     border: 1.5px solid #58e39b;
     animation: f-box-pop 2s ease-in-out infinite;
 }
-.f-yolo-visual::before { inset: 7px 16px 14px 5px; }
-.f-yolo-visual::after { inset: 16px 5px 5px 18px; animation-delay: .35s; }
+.f-sam-visual::before { inset: 7px 16px 14px 5px; }
+.f-sam-visual::after { inset: 16px 5px 5px 18px; animation-delay: .35s; }
 .f-input-visual::before {
     content: "";
     position: absolute;
@@ -1231,12 +1230,12 @@ input:focus, textarea:focus {
     border-radius: 50%;
     background: #a7e9c8;
 }
-.f-crop-visual::before {
+.f-detail-visual::before {
     content: "";
     position: absolute;
     inset: 9px;
     border: 2px solid #58e39b;
-    animation: f-crop-zoom 2s ease-in-out infinite;
+    animation: f-detail-zoom 2s ease-in-out infinite;
 }
 .f-cnn-visual {
     background:
@@ -1260,7 +1259,7 @@ input:focus, textarea:focus {
 .f-overlay-visual::before { left: 5px; top: 9px; }
 .f-overlay-visual::after { right: 5px; bottom: 7px; border-color: #ef746b; }
 @keyframes f-box-pop { 0%,100% { opacity:.35; transform:scale(.85); } 50% { opacity:1; transform:scale(1); } }
-@keyframes f-crop-zoom { 0%,100% { inset:12px; } 50% { inset:5px; } }
+@keyframes f-detail-zoom { 0%,100% { inset:12px; } 50% { inset:5px; } }
 @keyframes f-neural-pulse { 0%,100% { filter:brightness(.85); } 50% { filter:brightness(1.45); } }
 .f-pipe-title { font-size: .7rem; font-weight: 750; }
 .f-pipe-sub { margin-top: .18rem; color: #829c8e; font-size: .58rem; line-height: 1.35; }
@@ -2314,20 +2313,6 @@ def analyze_segments(image: Image.Image) -> tuple[list[dict[str, Any]], Image.Im
         return [], None, {"masken_gesamt": 0, "gueltige_masken": 0, "objekte": 0}, "Detailmodus nicht verfügbar"
 
 
-def crop_detection(image: Image.Image, detection: dict[str, Any]) -> Image.Image | None:
-    width, height = image.size
-    try:
-        x1, y1, x2, y2 = [int(value) for value in detection["box"]]
-    except (KeyError, TypeError, ValueError):
-        return None
-
-    x1, x2 = sorted((max(0, x1), min(width - 1, x2)))
-    y1, y2 = sorted((max(0, y1), min(height - 1, y2)))
-    if x2 <= x1 or y2 <= y1:
-        return None
-    return image.crop((x1, y1, x2, y2))
-
-
 def analyze_image(
     image: Image.Image,
     detail_mode: bool = False,
@@ -2356,8 +2341,23 @@ def analyze_image(
 
 
 def load_font(size: int) -> ImageFont.ImageFont:
-    font_path = os.path.join(os.path.dirname(PIL.__file__), "fonts", "DejaVuSans.ttf")
-    return ImageFont.truetype(font_path, size=size)
+    candidates = [
+        Path(PIL.__file__).resolve().parent / "fonts" / "DejaVuSans.ttf",
+        Path("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"),
+        Path("/usr/share/fonts/dejavu/DejaVuSans.ttf"),
+    ]
+    for font_path in candidates:
+        if not font_path.exists():
+            continue
+        try:
+            return ImageFont.truetype(str(font_path), size=size)
+        except OSError:
+            continue
+
+    try:
+        return ImageFont.truetype("DejaVuSans.ttf", size=size)
+    except OSError:
+        return ImageFont.load_default(size=size)
 
 
 def draw_boxes(
@@ -2465,141 +2465,6 @@ def result_copy(label: str, confidence: float) -> tuple[str, str, str, str]:
         f"Mögliche Verderbnismerkmale erkannt. ML-Konfidenz: {percentage}.",
         "Empfehlung: Charge separieren und Sicht- sowie Geruchskontrolle durchführen.",
     )
-
-def generate_pdf(
-    report_id: str,
-    timestamp: str,
-    label: str,
-    confidence: float,
-    annotated_image: Image.Image,
-    detections: list[dict[str, Any]],
-    engines: dict[str, str],
-) -> bytes | None:
-    try:
-        None
-    except ImportError:
-        return None
-    return None
-    buffer = io.BytesIO()
-    document = SimpleDocTemplate(
-        buffer,
-        pagesize=A4,
-        leftMargin=22 * mm,
-        rightMargin=22 * mm,
-        topMargin=18 * mm,
-        bottomMargin=20 * mm,
-    )
-    ink = colors.HexColor("#0B1710")
-    green = colors.HexColor("#00A962")
-    red = colors.HexColor("#C9362B")
-    muted = colors.HexColor("#53645A")
-    soft = colors.HexColor("#F0F5F2")
-    border = colors.HexColor("#DCE7E0")
-    verdict_color = green if label == "edible" else red
-
-    styles = {
-        "brand": ParagraphStyle(
-            "brand", fontName="Helvetica-Bold", fontSize=16, leading=20,
-            textColor=green, spaceAfter=5
-        ),
-        "title": ParagraphStyle(
-            "title", fontName="Helvetica-Bold", fontSize=18, leading=23,
-            textColor=ink, spaceAfter=8
-        ),
-        "meta": ParagraphStyle(
-            "meta", fontName="Helvetica", fontSize=8, leading=12,
-            textColor=muted, spaceAfter=5
-        ),
-        "label": ParagraphStyle(
-            "label",
-            fontName="Helvetica-Bold",
-            fontSize=7,
-            textColor=muted,
-            spaceBefore=16,
-            spaceAfter=8,
-        ),
-        "verdict": ParagraphStyle(
-            "verdict", fontName="Helvetica-Bold", fontSize=13, leading=18,
-            textColor=verdict_color, spaceAfter=6
-        ),
-        "body": ParagraphStyle(
-            "body", fontName="Helvetica", fontSize=8.5, leading=14,
-            textColor=muted, spaceAfter=5
-        ),
-    }
-
-    story = [
-        Paragraph("freshify", styles["brand"]),
-        Paragraph("Qualitätsprotokoll Wareneingang", styles["title"]),
-        Paragraph(
-            f"Protokoll-ID: <b>{escape(report_id)}</b> · {escape(timestamp)} · v{APP_VERSION}",
-            styles["meta"],
-        ),
-        Spacer(1, 12),
-        Paragraph("BEFUND", styles["label"]),
-        Paragraph(
-            "Visuell verwertbar" if label == "edible" else "Manuelle Kontrolle erforderlich",
-            styles["verdict"],
-        ),
-        Paragraph(f"ML-Konfidenz: <b>{confidence:.0%}</b>", styles["body"]),
-        Spacer(1, 5),
-        Paragraph("ANALYSE-OVERLAY", styles["label"]),
-    ]
-
-    image_buffer = io.BytesIO(image_bytes(annotated_image))
-    story.extend(
-        [
-            ReportImage(image_buffer, width=130 * mm, height=97.5 * mm, kind="proportional"),
-            Spacer(1, 10),
-            Paragraph("ANALYSEDATEN", styles["label"]),
-        ]
-    )
-
-    rows = [
-        ["Feld", "Wert"],
-        ["Protokoll-ID", report_id],
-        ["ML-Klasse", label],
-        ["ML-Konfidenz", f"{confidence:.4f}"],
-        ["Erkannte Objekte", str(len(detections)) if detections else "1 (Demo)"],
-        ["Frischemodell", engines.get("freshness", "–")],
-        ["Detailmodus", engines.get("detection", "–")],
-        ["Zeitpunkt", timestamp],
-        ["App-Version", APP_VERSION],
-    ]
-    table = Table(rows, colWidths=[52 * mm, 114 * mm])
-    table.setStyle(
-        TableStyle(
-            [
-                ("BACKGROUND", (0, 0), (-1, 0), soft),
-                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-                ("FONTNAME", (0, 1), (0, -1), "Helvetica-Bold"),
-                ("TEXTCOLOR", (0, 0), (-1, -1), muted),
-                ("TEXTCOLOR", (0, 1), (0, -1), ink),
-                ("FONTSIZE", (0, 0), (-1, -1), 8.5),
-                ("GRID", (0, 0), (-1, -1), 0.4, border),
-                ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, soft]),
-                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-                ("TOPPADDING", (0, 0), (-1, -1), 8),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
-                ("LEFTPADDING", (0, 0), (-1, -1), 7),
-                ("RIGHTPADDING", (0, 0), (-1, -1), 7),
-            ]
-        )
-    )
-    story.extend(
-        [
-            table,
-            Spacer(1, 18),
-            Paragraph(
-                "Automatisierte visuelle ML-Analyse. Geruch, Kerntemperatur und "
-                "mikrobiologische Belastung sind separat zu prüfen. Freshify unterstützt "
-                "die Qualitätskontrolle, ersetzt sie aber nicht.",
-                styles["body"],
-            ),
-        ]
-    )
-    document.build(story)
-    return buffer.getvalue()
 
 
 chips = "".join(
@@ -3037,35 +2902,13 @@ if st.session_state.page == "analyse":
             }
 
             st.markdown('<div class="f-section-label">Export</div>', unsafe_allow_html=True)
-            export_pdf, export_json = st.columns(2)
-            pdf_bytes = generate_pdf(
-                report_id,
-                timestamp,
-                label,
-                confidence,
-                annotated,
-                detections,
-                engines,
+            st.download_button(
+                "JSON herunterladen",
+                data=json.dumps(report_data, ensure_ascii=False, indent=2).encode("utf-8"),
+                file_name=f"freshify_{report_id}.json",
+                mime="application/json",
+                use_container_width=True,
             )
-            with export_pdf:
-                if pdf_bytes:
-                    st.download_button(
-                        "PDF herunterladen",
-                        data=pdf_bytes,
-                        file_name=f"freshify_{report_id}.pdf",
-                        mime="application/pdf",
-                        use_container_width=True,
-                    )
-                else:
-                    st.button("PDF nicht verfügbar", disabled=True, use_container_width=True)
-            with export_json:
-                st.download_button(
-                    "JSON herunterladen",
-                    data=json.dumps(report_data, ensure_ascii=False, indent=2).encode("utf-8"),
-                    file_name=f"freshify_{report_id}.json",
-                    mime="application/json",
-                    use_container_width=True,
-                )
 
             with st.expander("Technische Rohdaten"):
                 st.json(report_data)
@@ -3428,8 +3271,8 @@ if st.session_state.page == "about":
             <div class="f-data-pulse"></div>
             <div class="f-pipe-node"><div class="f-pipe-visual f-input-visual"><span></span></div><div class="f-pipe-title">Eingangsbild</div><div class="f-pipe-sub">Kamera oder Galerie</div></div>
             <div class="f-pipe-node"><div class="f-pipe-visual f-cnn-visual"></div><div class="f-pipe-title">Freshify · Standard</div><div class="f-pipe-sub">Bewertet das Gesamtbild</div></div>
-            <div class="f-pipe-node"><div class="f-pipe-visual f-yolo-visual"></div><div class="f-pipe-title">SAM · optional</div><div class="f-pipe-sub">Segmentiert Produktbereiche</div></div>
-            <div class="f-pipe-node"><div class="f-pipe-visual f-crop-visual"></div><div class="f-pipe-title">Detailmodus</div><div class="f-pipe-sub">Ergänzt Boxen im Overlay</div></div>
+            <div class="f-pipe-node"><div class="f-pipe-visual f-sam-visual"></div><div class="f-pipe-title">SAM · optional</div><div class="f-pipe-sub">Segmentiert Produktbereiche</div></div>
+            <div class="f-pipe-node"><div class="f-pipe-visual f-detail-visual"></div><div class="f-pipe-title">Detailmodus</div><div class="f-pipe-sub">Ergänzt Boxen im Overlay</div></div>
             <div class="f-pipe-node"><div class="f-pipe-visual f-overlay-visual"></div><div class="f-pipe-title">Review</div><div class="f-pipe-sub">Mensch prüft final</div></div>
         </div>
     </div>

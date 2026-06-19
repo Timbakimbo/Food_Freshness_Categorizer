@@ -58,18 +58,10 @@ uv pip install git+https://github.com/ChaoningZhang/MobileSAM.git
 ### Predict
 
 ```bash
-PYTHONPATH=src uv run python src/predict.py \
+uv run python main.py \
   data/val/non_edible/orange/orange_non_edible_21b002f6319f.png \
   --model models/freshify_baseline_with_new_raw.keras \
   --threshold 0.50
-```
-
-### Evaluate
-
-```bash
-PYTHONPATH=src uv run python src/evaluate.py \
-  --model models/freshify_baseline_with_new_raw.keras \
-  --validation data/val
 ```
 
 ### Streamlit
@@ -134,20 +126,24 @@ food_freshness/
 │   ├── train/
 │   └── val/
 ├── models/
-│   └── freshify_baseline_with_new_raw.keras
+│   ├── freshify_baseline_with_new_raw.keras
 │   └── mobile_sam.pt
 ├── notebooks/
 │   ├── 01_data_exploration_and_preprocessing.ipynb
 │   ├── 02_training.ipynb
 │   └── 03_evaluation.ipynb
-├── reports/
+├── docs/
+│   ├── images/
+│   │   └── business_case_workflow.svg
+│   ├── research.md
+│   └── training_findings.md
 ├── src/
 │   ├── data.py
-│   ├── evaluate.py
 │   ├── detector.py
 │   ├── predict.py
 │   ├── train.py
 │   └── util.py
+├── main.py
 ├── README.md
 ├── pyproject.toml
 └── uv.lock

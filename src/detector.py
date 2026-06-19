@@ -194,7 +194,7 @@ class Detector:
                 (x, y),
                 w,
                 h,
-                linew=1.5,
+                linewidth=1.5,
                 edgecolor="red",
                 facecolor="none",
             )
@@ -219,7 +219,7 @@ class Detector:
                 x2 - x1,
                 y2 - y1,
                 fill=False,
-                linew=2,
+                linewidth=2,
             )
 
             ax.add_patch(rect)
@@ -379,12 +379,12 @@ class Detector:
         )
 
     def food_score(self, crop: Image.Image):
-        """Berechnet einen Food-Score fuer genau einen Crop."""
+        """Berechnet einen Food-Score fuer einen Bildausschnitt."""
         scores = self.food_scores([crop])
         return scores[0] if scores else ("background", 0.0)
 
     def food_scores(self, crops: list[Image.Image]) -> list[tuple[str, float]]:
-        """Berechnet Food-Scores fuer mehrere Crops in einem Batch."""
+        """Berechnet Food-Scores fuer mehrere Bildausschnitte."""
         if self.food_classifier is None:
             return [("background", 0.0) for _ in crops]
         if not crops:
