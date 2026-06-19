@@ -2191,6 +2191,7 @@ def init_state() -> None:
         "last_detections": [],
         "last_engine": None,
         "last_detail_mode": False,
+        "last_segmentation_stats": {},
         "crisp_phase": "business",
     }
     for key, value in defaults.items():
@@ -2287,6 +2288,32 @@ def detect_objects(image: Image.Image) -> tuple[list[dict[str, Any]], str]:
         return [], "Detektion nicht verfügbar"
 
 
+def analyze_segments(image: Image.Image) -> tuple[list[dict[str, Any]], Image.Image | None, dict[str, int], str]:
+    try:
+        from src.detector import analyze_segments as project_analyze_segments
+
+        raw = project_analyze_segments(image)
+        detections = []
+        for item in raw.get("detections", []):
+            normalized = normalize_detection(item)
+            if normalized:
+                detections.append(normalized)
+
+        overlay = raw.get("overlay")
+        if not isinstance(overlay, Image.Image):
+            overlay = None
+
+        stats = {
+            "masken_gesamt": int(raw.get("mask_count", 0)),
+            "gueltige_masken": int(raw.get("valid_mask_count", 0)),
+            "objekte": len(detections),
+        }
+        return detections, overlay, stats, "src.detector.analyze_segments"
+    except Exception as e:
+        print(f"[WARN] Segment analysis unavailable: {e}")
+        return [], None, {"masken_gesamt": 0, "gueltige_masken": 0, "objekte": 0}, "Detailmodus nicht verfügbar"
+
+
 def crop_detection(image: Image.Image, detection: dict[str, Any]) -> Image.Image | None:
     width, height = image.size
     try:
@@ -2304,7 +2331,7 @@ def crop_detection(image: Image.Image, detection: dict[str, Any]) -> Image.Image
 def analyze_image(
     image: Image.Image,
     detail_mode: bool = False,
-) -> tuple[str, float, list[dict[str, Any]], dict[str, str]]:
+) -> tuple[str, float, list[dict[str, Any]], dict[str, str], Image.Image | None, dict[str, int]]:
     label, confidence, probability_non_edible, freshness_engine = predict_freshness(image)
     engines = {
         "freshness": freshness_engine,
@@ -2312,9 +2339,9 @@ def analyze_image(
     }
 
     if not detail_mode:
-        return label, confidence, [], engines
+        return label, confidence, [], engines, None, {}
 
-    detections, detection_engine = detect_objects(image)
+    detections, segmentation_overlay, segmentation_stats, detection_engine = analyze_segments(image)
     enriched_detections = [
         {
             **detection,
@@ -2325,7 +2352,7 @@ def analyze_image(
         for detection in detections
     ]
     engines["detection"] = detection_engine
-    return label, confidence, enriched_detections, engines
+    return label, confidence, enriched_detections, engines, segmentation_overlay, segmentation_stats
 
 
 def load_font(size: int) -> ImageFont.ImageFont:
@@ -2338,12 +2365,16 @@ def draw_boxes(
     detections: list[dict[str, Any]],
     freshness_label: str,
     confidence: float,
+    fallback_box: bool = True,
 ) -> Image.Image:
     canvas = image.copy()
     draw = ImageDraw.Draw(canvas)
     width, height = canvas.size
     line_width = max(3, int(min(width, height) * 0.006))
     base_font_size = max(11, int(min(width, height) * 0.026))
+
+    if not detections and not fallback_box:
+        return canvas
 
     boxes = detections or [{
         "box": [
@@ -2748,11 +2779,18 @@ if st.session_state.page == "analyse":
                     started_at = time.perf_counter()
                     try:
                         image = ImageOps.exif_transpose(Image.open(io.BytesIO(raw_bytes))).convert("RGB")
-                        label, confidence, detections, engines = analyze_image(
+                        label, confidence, detections, engines, segmented, segmentation_stats = analyze_image(
                             image,
                             detail_mode=detail_mode,
                         )
-                        annotated = draw_boxes(image, detections, label, confidence)
+                        overlay_base = segmented if detail_mode and segmented is not None else image
+                        annotated = draw_boxes(
+                            overlay_base,
+                            detections,
+                            label,
+                            confidence,
+                            fallback_box=not (detail_mode and segmented is not None),
+                        )
                     except Exception as e:
                         st.error(f"ML-Analyse konnte nicht ausgeführt werden: {e}")
                         st.stop()
@@ -2769,6 +2807,7 @@ if st.session_state.page == "analyse":
                             "last_detections": detections,
                             "last_engine": engines,
                             "last_detail_mode": detail_mode,
+                            "last_segmentation_stats": segmentation_stats,
                             "last_inference_ms": inference_ms,
                             "last_image_size": image.size,
                         }
@@ -2777,7 +2816,11 @@ if st.session_state.page == "analyse":
             st.image(
                 st.session_state.last_annotated,
                 use_container_width=True,
-                caption="ML-Overlay · Grün: visuell unauffällig · Rot: manuell prüfen",
+                caption=(
+                    "SAM-Segmentierung · Grün: visuell unauffällig · Rot: manuell prüfen"
+                    if detail_mode
+                    else "ML-Overlay · Grün: visuell unauffällig · Rot: manuell prüfen"
+                ),
             )
             st.markdown(
                 '<div class="f-section-label" style="margin-top:.7rem">Anderes Bild analysieren</div>',
@@ -2827,6 +2870,7 @@ if st.session_state.page == "analyse":
             inference_ms = st.session_state.get("last_inference_ms", 0.0)
             image_width, image_height = st.session_state.get("last_image_size", (0, 0))
             detail_mode = st.session_state.get("last_detail_mode", False)
+            segmentation_stats = st.session_state.get("last_segmentation_stats", {})
 
             if engines["freshness"] == "Demo-Heuristik":
                 st.markdown(
@@ -2859,7 +2903,11 @@ if st.session_state.page == "analyse":
             timestamp = datetime.now().strftime("%d.%m.%Y, %H:%M")
             object_count = len(detections)
             object_display = str(object_count) if detail_mode else "Gesamtbild"
-            object_note = "SAM-Objekte im Detailmodus" if detail_mode else "Keine Segmentierung im Standardmodus"
+            object_note = (
+                f"{segmentation_stats.get('masken_gesamt', 0)} SAM-Masken"
+                if detail_mode
+                else "Keine Segmentierung im Standardmodus"
+            )
             image_megapixels = (image_width * image_height) / 1_000_000
             throughput = (
                 image_megapixels / (inference_ms / 1000)
@@ -2981,6 +3029,7 @@ if st.session_state.page == "analyse":
                 "bild_megapixel": round(image_megapixels, 4),
                 "cnn_evaluation_testset": evaluation_metrics,
                 "detailmodus": detail_mode,
+                "segmentierung": segmentation_stats,
                 "objekte": detections,
                 "schnittstellen": engines,
                 "app_version": APP_VERSION,

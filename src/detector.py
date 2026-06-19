@@ -64,10 +64,6 @@ class Detector:
         if model is None or SamAutomaticMaskGenerator is None:
             return
 
-        self.food_classifier = self.load_food_classifier()
-        if self.food_classifier is None:
-            return
-
         self.mask_generator = SamAutomaticMaskGenerator(
             model,
             points_per_side=self.points_per_side,
@@ -75,6 +71,7 @@ class Detector:
             stability_score_thresh=0.92,
             min_mask_region_area=500,
         )
+        self.food_classifier = self.load_food_classifier()
 
     # -----------------------------
     # IMAGE UTIL
@@ -96,6 +93,44 @@ class Detector:
             Image.Resampling.LANCZOS,
         )
         return resized, w / resized_w, h / resized_h
+
+    def mask_color(self, index: int) -> tuple[int, int, int]:
+        colors = [
+            (0, 169, 98),
+            (201, 54, 43),
+            (214, 146, 58),
+            (68, 110, 214),
+            (133, 86, 191),
+            (36, 139, 154),
+        ]
+        return colors[index % len(colors)]
+
+    def build_segmentation_overlay(
+        self,
+        image: Image.Image,
+        masks: list[dict],
+        alpha: float = 0.38,
+    ) -> Image.Image:
+        base_image = image.convert("RGB")
+        canvas = np.array(base_image, dtype=np.float32)
+
+        for index, mask in enumerate(masks):
+            segmentation = mask.get("segmentation")
+            if segmentation is None:
+                continue
+
+            mask_image = Image.fromarray(
+                segmentation.astype(np.uint8) * 255,
+                mode="L",
+            )
+            if mask_image.size != base_image.size:
+                mask_image = mask_image.resize(base_image.size, Image.Resampling.NEAREST)
+
+            mask_pixels = np.asarray(mask_image) > 0
+            color = np.array(self.mask_color(index), dtype=np.float32)
+            canvas[mask_pixels] = canvas[mask_pixels] * (1 - alpha) + color * alpha
+
+        return Image.fromarray(np.clip(canvas, 0, 255).astype(np.uint8))
 
     def show_segments(self, image: Image.Image, masks: list[dict]):
         """
@@ -421,10 +456,17 @@ class Detector:
     # -----------------------------
     # MAIN PIPELINE
     # -----------------------------
-    def detect_objects(self, image: Image.Image):
+    def analyze_segments(self, image: Image.Image) -> dict:
+        result = {
+            "detections": [],
+            "overlay": image.convert("RGB"),
+            "mask_count": 0,
+            "valid_mask_count": 0,
+        }
+
         try:
-            if self.mask_generator is None or self.food_classifier is None:
-                return []
+            if self.mask_generator is None:
+                return result
 
             original_w, original_h = image.size
             a_img, scale_x, scale_y = self.resize_for_segmentation(image)
@@ -433,6 +475,8 @@ class Detector:
             print("Starting SAM segmentation...")
             masks = self.segment_everything(a_img)
             print(f"Generated {len(masks)} masks")
+            result["mask_count"] = len(masks)
+            result["overlay"] = self.build_segmentation_overlay(image, masks)
             if self.debug:
                 self.show_segments(image=a_img, masks=masks)
                 self.show_segments_with_boxes(image=a_img, masks=masks) 
@@ -442,6 +486,7 @@ class Detector:
             for mask in masks:
                 if not self.is_valid_mask(mask):
                     continue
+                result["valid_mask_count"] += 1
 
                 box = self.bbox_to_box(mask)
                 box = self.clamp_box(box, analysis_w, analysis_h)
@@ -497,11 +542,12 @@ class Detector:
             proposals = proposals[:self.max_detections]
             if self.debug:
                 self.show_detections(image, proposals)
-            return proposals 
+            result["detections"] = proposals
+            return result
 
         except Exception as e:
             print("\n" + "=" * 10)
-            print("DETECT_OBJECTS FAILED")
+            print("ANALYZE_SEGMENTS FAILED")
             print("=" * 10)
             print(f"Exception Type: {type(e).__name__}")
             print(f"Exception: {e}")
@@ -509,7 +555,10 @@ class Detector:
             traceback.print_exc()
             print("=" * 10)
 
-            return []
+            return result
+
+    def detect_objects(self, image: Image.Image):
+        return self.analyze_segments(image)["detections"]
 
 
 # Singleton
@@ -531,6 +580,10 @@ def get_detector() -> Detector:
 
 def detect_objects(image: Image.Image) -> list[dict]:
     return get_detector().detect_objects(image)
+
+
+def analyze_segments(image: Image.Image) -> dict:
+    return get_detector().analyze_segments(image)
 
 
 def main():
