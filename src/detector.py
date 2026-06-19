@@ -1,38 +1,76 @@
 import os
 import traceback
 import keras
-from keras.applications.efficientnet import decode_predictions
 import numpy as np
+from keras.applications.efficientnet import decode_predictions
 from PIL import Image
 from datetime import datetime
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
-from mobile_sam import sam_model_registry, SamAutomaticMaskGenerator
+
+try:
+    import torch
+    from mobile_sam import sam_model_registry, SamAutomaticMaskGenerator
+except ImportError:
+    torch = None
+    sam_model_registry = None
+    SamAutomaticMaskGenerator = None
+
+
+DEFAULT_CHECKPOINT = "models/mobile_sam.pt"
+DEFAULT_MAX_IMAGE_SIDE = 640
+DEFAULT_POINTS_PER_SIDE = 16
+DEFAULT_MAX_CANDIDATES = 20
+DEFAULT_MAX_DETECTIONS = 10
 
 
 class Detector:
     """
-    Der Detector implementiert eine Segmentierung für Lebensmittelbilder.
-    
-    Es wird das gesamte Bild segmentiert und die erzeugten Objekte (Masken und Bounding Boxes) 
-    werden anschließend als Ergebnisse durch Non-Max-Suppression (NMS) gefiltert und zur Klassifizierung übergeben.
+    Segmentiert Lebensmittelbilder mit MobileSAM.
+
+    Masken werden zu Bounding Boxes reduziert, per Food-Vorklassifizierung
+    gefiltert und mit Non-Max-Suppression zusammengeführt.
     """
     
-    def __init__(self):
-        self.run_dir = os.path.join(
-            "logs/detector/",
-            datetime.now().strftime("%Y%m%d_%H%M%S")
-        )
-        os.makedirs(self.run_dir, exist_ok=True)
-        model = self.load_segmentation()
+    def __init__(
+        self,
+        checkpoint: str = DEFAULT_CHECKPOINT,
+        debug: bool = False,
+        max_image_side: int = DEFAULT_MAX_IMAGE_SIDE,
+        points_per_side: int = DEFAULT_POINTS_PER_SIDE,
+        max_candidates: int = DEFAULT_MAX_CANDIDATES,
+        max_detections: int = DEFAULT_MAX_DETECTIONS,
+    ):
+        self.checkpoint = checkpoint
+        self.debug = debug
+        self.max_image_side = max_image_side
+        self.points_per_side = points_per_side
+        self.max_candidates = max_candidates
+        self.max_detections = max_detections
+        self.device = "cuda" if torch is not None and torch.cuda.is_available() else "cpu"
+        self.run_dir = None
         self.score_threshold = 0.725
-        self.food_classifier = keras.applications.EfficientNetB0(
-            include_top=True,
-            weights="imagenet"
-        )
+        self.food_classifier = None
+        self.mask_generator = None
+
+        if self.debug:
+            self.run_dir = os.path.join(
+                "logs/detector/",
+                datetime.now().strftime("%Y%m%d_%H%M%S")
+            )
+            os.makedirs(self.run_dir, exist_ok=True)
+
+        model = self.load_segmentation()
+        if model is None or SamAutomaticMaskGenerator is None:
+            return
+
+        self.food_classifier = self.load_food_classifier()
+        if self.food_classifier is None:
+            return
+
         self.mask_generator = SamAutomaticMaskGenerator(
             model,
-            points_per_side=32,
+            points_per_side=self.points_per_side,
             pred_iou_thresh=0.86,
             stability_score_thresh=0.92,
             min_mask_region_area=500,
@@ -43,6 +81,21 @@ class Detector:
     # -----------------------------
     def to_numpy_rgb(self, image: Image.Image) -> np.ndarray:
         return np.array(image.convert("RGB"), dtype=np.uint8)
+
+    def resize_for_segmentation(self, image: Image.Image) -> tuple[Image.Image, float, float]:
+        w, h = image.size
+        largest_side = max(w, h)
+        if largest_side <= self.max_image_side:
+            return image.convert("RGB"), 1.0, 1.0
+
+        scale = self.max_image_side / largest_side
+        resized_w = max(1, int(round(w * scale)))
+        resized_h = max(1, int(round(h * scale)))
+        resized = image.convert("RGB").resize(
+            (resized_w, resized_h),
+            Image.Resampling.LANCZOS,
+        )
+        return resized, w / resized_w, h / resized_h
 
     def show_segments(self, image: Image.Image, masks: list[dict]):
         """
@@ -106,7 +159,7 @@ class Detector:
                 (x, y),
                 w,
                 h,
-                linewidth=1.5,
+                linew=1.5,
                 edgecolor="red",
                 facecolor="none",
             )
@@ -131,7 +184,7 @@ class Detector:
                 x2 - x1,
                 y2 - y1,
                 fill=False,
-                linewidth=2,
+                linew=2,
             )
 
             ax.add_patch(rect)
@@ -147,6 +200,10 @@ class Detector:
         self.save_figure("sam_detections")
 
     def save_figure(self, name: str):
+        if not self.debug or self.run_dir is None:
+            plt.close()
+            return
+
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         
         filepath = os.path.join(
@@ -168,11 +225,34 @@ class Detector:
     # SAM MODEL
     # -----------------------------
     def load_segmentation(self):
-        sam = sam_model_registry["vit_t"](
-            checkpoint="models/mobile_sam.pt"
-        )
-        sam.eval()
-        return sam
+        if sam_model_registry is None:
+            print("[WARN] mobile_sam is not installed; object detection is disabled.")
+            return None
+
+        if not os.path.exists(self.checkpoint):
+            print(f"[WARN] MobileSAM checkpoint not found at '{self.checkpoint}'; object detection is disabled.")
+            return None
+
+        try:
+            sam = sam_model_registry["vit_t"](
+                checkpoint=self.checkpoint
+            )
+            sam.to(device=self.device)
+            sam.eval()
+            return sam
+        except Exception as e:
+            print(f"[WARN] Could not load MobileSAM checkpoint: {e}")
+            return None
+
+    def load_food_classifier(self):
+        try:
+            return keras.applications.EfficientNetB0(
+                include_top=True,
+                weights="imagenet",
+            )
+        except Exception as e:
+            print(f"[WARN] Could not load food preclassifier: {e}")
+            return None
 
     # -----------------------------
     # MASK PROCESSING
@@ -189,6 +269,19 @@ class Detector:
 
         return [int(xs.min()), int(ys.min()), int(xs.max()), int(ys.max())]
 
+    def bbox_to_box(self, mask_dict):
+        bbox = mask_dict.get("bbox")
+        if not isinstance(bbox, (list, tuple)) or len(bbox) != 4:
+            return None
+
+        x, y, w, h = bbox
+        return [
+            int(round(x)),
+            int(round(y)),
+            int(round(x + w)),
+            int(round(y + h)),
+        ]
+
     def is_valid_mask(self, mask_dict, min_area=2500):
         if mask_dict["area"] < min_area:
             return False
@@ -203,16 +296,16 @@ class Detector:
     # -----------------------------
     # BOX UTIL
     # -----------------------------
-    def clamp_box(self, box, width, height):
+    def clamp_box(self, box, w, h):
         if box is None:
             return None
 
         x1, y1, x2, y2 = box
 
-        x1 = int(max(0, min(x1, width - 1)))
-        y1 = int(max(0, min(y1, height - 1)))
-        x2 = int(max(0, min(x2, width - 1)))
-        y2 = int(max(0, min(y2, height - 1)))
+        x1 = int(max(0, min(x1, w - 1)))
+        y1 = int(max(0, min(y1, h - 1)))
+        x2 = int(max(0, min(x2, w - 1)))
+        y2 = int(max(0, min(y2, h - 1)))
 
         if x2 <= x1 or y2 <= y1:
             return None
@@ -224,34 +317,68 @@ class Detector:
             return None
         return image.crop(tuple(box))
 
+    def scale_box(self, box, scale_x: float, scale_y: float, w: int, h: int):
+        x1, y1, x2, y2 = box
+        scaled = [
+            int(round(x1 * scale_x)),
+            int(round(y1 * scale_y)),
+            int(round(x2 * scale_x)),
+            int(round(y2 * scale_y)),
+        ]
+        return self.clamp_box(scaled, w, h)
+
     # -----------------------------
     # SCORE FUSION
     # -----------------------------
-    def compute_final_score(self, score, mask):
+    def compute_final_score(self, food_score, mask):
         return (
-            0.7 * score +
+            0.7 * food_score +
             0.2 * mask.get("predicted_iou", 0.0) +
             0.1 * mask.get("stability_score", 0.0)
         )
 
-    def _food_score(self, crop):
-        """Berechnet Food-Score für genau einen CROP. """
-        arr = np.array(crop.resize((224, 224)).convert("RGB"), dtype=np.float32)
-        
-        arr = keras.applications.efficientnet.preprocess_input(arr)
-        arr = np.expand_dims(arr, axis=0)
+    def mask_quality(self, mask):
+        return (
+            0.7 * mask.get("predicted_iou", 0.0) +
+            0.3 * mask.get("stability_score", 0.0)
+        )
 
-        preds = self.food_classifier(arr)        
-        classes = decode_predictions(preds, top=3)[0]
-        
-        food_class = "background"
-        food_score = 0.0        
-        for _, lable, score in classes:
-            if float(score) > 0.5:
-                food_class = lable
-                food_score = float(score)
-        
-        return food_class, food_score
+    def food_score(self, crop: Image.Image):
+        """Berechnet einen Food-Score fuer genau einen Crop."""
+        scores = self.food_scores([crop])
+        return scores[0] if scores else ("background", 0.0)
+
+    def food_scores(self, crops: list[Image.Image]) -> list[tuple[str, float]]:
+        """Berechnet Food-Scores fuer mehrere Crops in einem Batch."""
+        if self.food_classifier is None:
+            return [("background", 0.0) for _ in crops]
+        if not crops:
+            return []
+
+        batch = np.stack([
+            np.array(crop.resize((224, 224)).convert("RGB"), dtype=np.float32)
+            for crop in crops
+        ])
+        batch = keras.applications.efficientnet.preprocess_input(batch)
+
+        preds = np.asarray(self.food_classifier(batch, training=False))
+        decoded = decode_predictions(preds, top=3)
+
+        scores = []
+        for classes in decoded:
+            food_class = "background"
+            score = 0.0
+            for _, label, confidence in classes:
+                if float(confidence) > score:
+                    food_class = label
+                    score = float(confidence)
+
+            if score <= 0.5:
+                scores.append(("background", 0.0))
+            else:
+                scores.append((food_class, score))
+
+        return scores
 
     # -----------------------------
     # IOU + NMS
@@ -296,47 +423,80 @@ class Detector:
     # -----------------------------
     def detect_objects(self, image: Image.Image):
         try:
-            H, W = image.size[1], image.size[0]
+            if self.mask_generator is None or self.food_classifier is None:
+                return []
+
+            original_w, original_h = image.size
+            a_img, scale_x, scale_y = self.resize_for_segmentation(image)
+            analysis_w, analysis_h = a_img.size
 
             print("Starting SAM segmentation...")
-            masks = self.segment_everything(image)
+            masks = self.segment_everything(a_img)
             print(f"Generated {len(masks)} masks")
-            # DEBUG
-            self.show_segments(image=image, masks=masks)
-            self.show_segments_with_boxes(image=image, masks=masks) 
+            if self.debug:
+                self.show_segments(image=a_img, masks=masks)
+                self.show_segments_with_boxes(image=a_img, masks=masks) 
 
-            proposals = []
+            candidates = []
             
             for mask in masks:
                 if not self.is_valid_mask(mask):
                     continue
 
-                box = self.mask_to_box(mask["segmentation"])
-                box = self.clamp_box(box, W, H)
+                box = self.bbox_to_box(mask)
+                box = self.clamp_box(box, analysis_w, analysis_h)
                 if box is None:
                     continue
 
-                crop = self.safe_crop(image, box)
+                crop = self.safe_crop(a_img, box)
                 if crop is None:
                     continue
 
-                lable, score = self._food_score(crop)
-                final_score = self.compute_final_score(
-                    score,
-                    mask,
-                )
+                candidates.append({
+                    "box": box,
+                    "crop": crop,
+                    "mask": mask,
+                    "quality": self.mask_quality(mask),
+                })
+
+            candidates = sorted(
+                candidates,
+                key=lambda item: item["quality"],
+                reverse=True,
+            )[:self.max_candidates]
+
+            proposals = []
+            food_results = self.food_scores([candidate["crop"] for candidate in candidates])
+
+            for candidate, (food_label, score) in zip(candidates, food_results):
+                if score <= 0.0:
+                    continue
+
+                mask = candidate["mask"]
+                final_score = self.compute_final_score(score, mask)
                 if final_score < self.score_threshold:
                     continue
 
+                og_box = self.scale_box(
+                    candidate["box"],
+                    scale_x,
+                    scale_y,
+                    original_w,
+                    original_h,
+                )
+                if og_box is None:
+                    continue
+
                 proposals.append({
-                    "box": box,
+                    "box": og_box,
                     "score": final_score,
-                    "label": lable,
+                    "label": food_label,
                 })
             
             proposals = self._non_max_suppression(proposals, iou_threshold=0.25)
-            #DEBUG:
-            self.show_detections(image, proposals)
+            proposals = proposals[:self.max_detections]
+            if self.debug:
+                self.show_detections(image, proposals)
             return proposals 
 
         except Exception as e:
@@ -358,7 +518,14 @@ def get_detector() -> Detector:
     global _detector
 
     if _detector is None:
-        _detector = Detector()
+        debug = os.environ.get("FRESHIFY_DETECTOR_DEBUG", "").lower() in {"1", "true", "yes"}
+        _detector = Detector(
+            debug=debug,
+            max_image_side=DEFAULT_MAX_IMAGE_SIDE,
+            points_per_side=DEFAULT_POINTS_PER_SIDE,
+            max_candidates=DEFAULT_MAX_CANDIDATES,
+            max_detections=DEFAULT_MAX_DETECTIONS,
+        )
         
     return _detector
 

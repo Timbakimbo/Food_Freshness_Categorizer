@@ -17,11 +17,11 @@ from typing import Any
 
 import PIL
 import streamlit as st
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont, ImageOps
 
 
 APP_VERSION = "0.2.0"
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 SUPPORTED_ITEMS = [
@@ -2190,6 +2190,7 @@ def init_state() -> None:
         "last_annotated": None,
         "last_detections": [],
         "last_engine": None,
+        "last_detail_mode": False,
         "crisp_phase": "business",
     }
     for key, value in defaults.items():
@@ -2228,32 +2229,31 @@ def normalize_prediction(result: Any) -> tuple[str, float]:
         raise ValueError("Nicht unterstütztes Ergebnisformat der ML-Schnittstelle.")
 
     normalized = str(label).strip().lower()
+    if normalized == "error":
+        raise RuntimeError("Das Frischemodell konnte das Bild nicht verarbeiten.")
+
     edible_aliases = {"edible", "fresh", "frisch", "good", "ok", "verwertbar"}
-    final_label = "edible" if normalized in edible_aliases else "spoiled"
+    spoiled_aliases = {"non_edible", "spoiled", "rotten", "bad", "risk", "pruefen", "prüfen"}
+    if normalized in edible_aliases:
+        final_label = "edible"
+    elif normalized in spoiled_aliases:
+        final_label = "spoiled"
+    else:
+        final_label = "spoiled"
     return final_label, max(0.0, min(1.0, float(confidence)))
 
 
-def predict_freshness(image: Image.Image) -> tuple[str, float, str]:
-    """Use the project model when installed; otherwise return an explicit demo result."""
-    try:
-        from src.predict import predict_image
+def predict_freshness(image: Image.Image) -> tuple[str, float, float, str]:
+    """Use the project model for one PIL image and normalize the UI label."""
+    from src.predict import predict_image
 
-        label, confidence = normalize_prediction(predict_image(image))
-        return label, confidence, "src.predict.predict_image"
-    except Exception:
-        pass
-        # sample = image.copy()
-        # sample.thumbnail((160, 160))
-        # pixels = list(sample.convert("RGB").getdata())
-        # if not pixels:
-        #     return "edible", 0.5, "Demo-Heuristik"
-        # green = sum(g for _, g, _ in pixels) / len(pixels)
-        # red = sum(r for r, _, _ in pixels) / len(pixels)
-        # score = max(0.58, min(0.91, 0.71 + (green - red) / 700))
-        # return "edible", score, "Demo-Heuristik"
+    result = predict_image(image)
+    label, confidence = normalize_prediction(result)
+    probability_non_edible = float(result[2]) if isinstance(result, (tuple, list)) and len(result) >= 3 else 0.0
+    return label, confidence, max(0.0, min(1.0, probability_non_edible)), "src.predict.predict_image"
 
 
-def normalize_detection(det: Any) -> dict[str, Any]:
+def normalize_detection(det: Any) -> dict[str, Any] | None:
     if not isinstance(det, dict):
         return None
     box = det.get("box") or det.get("bbox")
@@ -2263,15 +2263,15 @@ def normalize_detection(det: Any) -> dict[str, Any]:
         coords = [int(float(value)) for value in box]
         return {
             "box": coords,
-            "label": str(det.get("label") or det.get("class_name") or "Produkt"),
+            "label": str("Produkt"),
             "score": max(0.0, min(1.0, float(det.get("score") or det.get("confidence") or 0.0))),
         }
     except Exception:
-        return [], "Ungültiges Dict"
+        return None
 
 
 def detect_objects(image: Image.Image) -> tuple[list[dict[str, Any]], str]:
-    """Use src.yolo.main.detect_objects when available."""
+    """Use the optional project detector when available."""
     try:
         from src.detector import detect_objects as project_detector
 
@@ -2281,9 +2281,51 @@ def detect_objects(image: Image.Image) -> tuple[list[dict[str, Any]], str]:
             normalized = normalize_detection(item)
             if normalized:
                 detections.append(normalized)
-        return detections, "src.yolo.main.detect_objects"
-    except Exception:
-        return [], "Simulierte Position"
+        return detections, "src.detector.detect_objects"
+    except Exception as e:
+        print(f"[WARN] Object detection unavailable: {e}")
+        return [], "Detektion nicht verfügbar"
+
+
+def crop_detection(image: Image.Image, detection: dict[str, Any]) -> Image.Image | None:
+    width, height = image.size
+    try:
+        x1, y1, x2, y2 = [int(value) for value in detection["box"]]
+    except (KeyError, TypeError, ValueError):
+        return None
+
+    x1, x2 = sorted((max(0, x1), min(width - 1, x2)))
+    y1, y2 = sorted((max(0, y1), min(height - 1, y2)))
+    if x2 <= x1 or y2 <= y1:
+        return None
+    return image.crop((x1, y1, x2, y2))
+
+
+def analyze_image(
+    image: Image.Image,
+    detail_mode: bool = False,
+) -> tuple[str, float, list[dict[str, Any]], dict[str, str]]:
+    label, confidence, probability_non_edible, freshness_engine = predict_freshness(image)
+    engines = {
+        "freshness": freshness_engine,
+        "detection": "Gesamtbildanalyse",
+    }
+
+    if not detail_mode:
+        return label, confidence, [], engines
+
+    detections, detection_engine = detect_objects(image)
+    enriched_detections = [
+        {
+            **detection,
+            "freshness_label": label,
+            "freshness_confidence": confidence,
+            "probability_non_edible": probability_non_edible,
+        }
+        for detection in detections
+    ]
+    engines["detection"] = detection_engine
+    return label, confidence, enriched_detections, engines
 
 
 def load_font(size: int) -> ImageFont.ImageFont:
@@ -2639,6 +2681,12 @@ if st.session_state.page == "analyse":
         with camera_tab:
             camera_image = st.camera_input("Foto aufnehmen", label_visibility="collapsed")
 
+        detail_mode = st.toggle(
+            "Detailmodus",
+            value=False,
+            help="Aktiviert MobileSAM-Objektsegmentierung. Die Standardanalyse klassifiziert nur das Gesamtbild.",
+        )
+
         replacement_file = st.session_state.get("replace_file")
         image_source = (
             replacement_file
@@ -2691,19 +2739,24 @@ if st.session_state.page == "analyse":
                 unsafe_allow_html=True,
             )
             raw_bytes = source_bytes(image_source)
-            analysis_key = f"{getattr(image_source, 'name', 'camera')}:{len(raw_bytes)}:{hash(raw_bytes)}"
+            analysis_key = (
+                f"{getattr(image_source, 'name', 'camera')}:"
+                f"{len(raw_bytes)}:{hash(raw_bytes)}:detail={int(detail_mode)}"
+            )
             if st.session_state.analysis_key != analysis_key:
                 with st.spinner("ML-Analyse läuft …"):
                     started_at = time.perf_counter()
-                    # TODO: remove PIL.Image...?!?
-                    image = Image.open(io.BytesIO(raw_bytes)).convert("RGB")
-                    # TODO: TypeError: cannot unpack non-iterable NoneType object
-                    # label, confidence, freshness_engine = predict_freshness(image)
-                    label = "leck_Eier"
-                    confidence = 0.99
-                    freshness_engine = "die engine die alles engeeniert"
-                    detections, detection_engine = detect_objects(image)
-                    annotated = draw_boxes(image, detections, label, confidence)
+                    try:
+                        image = ImageOps.exif_transpose(Image.open(io.BytesIO(raw_bytes))).convert("RGB")
+                        label, confidence, detections, engines = analyze_image(
+                            image,
+                            detail_mode=detail_mode,
+                        )
+                        annotated = draw_boxes(image, detections, label, confidence)
+                    except Exception as e:
+                        st.error(f"ML-Analyse konnte nicht ausgeführt werden: {e}")
+                        st.stop()
+
                     inference_ms = (time.perf_counter() - started_at) * 1000
                     time.sleep(0.25)
                     st.session_state.update(
@@ -2714,10 +2767,8 @@ if st.session_state.page == "analyse":
                             "last_original": image,
                             "last_annotated": annotated,
                             "last_detections": detections,
-                            "last_engine": {
-                                "freshness": freshness_engine,
-                                "detection": detection_engine,
-                            },
+                            "last_engine": engines,
+                            "last_detail_mode": detail_mode,
                             "last_inference_ms": inference_ms,
                             "last_image_size": image.size,
                         }
@@ -2775,6 +2826,7 @@ if st.session_state.page == "analyse":
             engines = st.session_state.last_engine
             inference_ms = st.session_state.get("last_inference_ms", 0.0)
             image_width, image_height = st.session_state.get("last_image_size", (0, 0))
+            detail_mode = st.session_state.get("last_detail_mode", False)
 
             if engines["freshness"] == "Demo-Heuristik":
                 st.markdown(
@@ -2806,7 +2858,8 @@ if st.session_state.page == "analyse":
 
             timestamp = datetime.now().strftime("%d.%m.%Y, %H:%M")
             object_count = len(detections)
-            object_display = str(object_count) if object_count else "1 · Demo"
+            object_display = str(object_count) if detail_mode else "Gesamtbild"
+            object_note = "SAM-Objekte im Detailmodus" if detail_mode else "Keine Segmentierung im Standardmodus"
             image_megapixels = (image_width * image_height) / 1_000_000
             throughput = (
                 image_megapixels / (inference_ms / 1000)
@@ -2834,7 +2887,7 @@ if st.session_state.page == "analyse":
     <div class="f-metric">
         <div class="f-metric-label">Objekte</div>
         <div class="f-metric-value">{object_display}</div>
-        <div class="f-metric-note">YOLO-Erkennungen im Bild</div>
+        <div class="f-metric-note">{object_note}</div>
     </div>
     <div class="f-metric">
         <div class="f-metric-label">Inferenzzeit</div>
@@ -2927,6 +2980,7 @@ if st.session_state.page == "analyse":
                 "bildaufloesung": [image_width, image_height],
                 "bild_megapixel": round(image_megapixels, 4),
                 "cnn_evaluation_testset": evaluation_metrics,
+                "detailmodus": detail_mode,
                 "objekte": detections,
                 "schnittstellen": engines,
                 "app_version": APP_VERSION,
