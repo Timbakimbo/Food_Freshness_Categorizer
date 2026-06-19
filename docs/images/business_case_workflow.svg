@@ -42,10 +42,9 @@
     <rect class="icon" x="48" y="26" width="90" height="62" rx="8" />
     <rect x="63" y="38" width="26" height="22" rx="4" fill="#ffffff" stroke="#00a962" stroke-width="2" />
     <rect x="96" y="50" width="25" height="24" rx="4" fill="#ffffff" stroke="#c9362b" stroke-width="2" />
-    <text class="small" x="57" y="105">optional</text>
-    <text class="label" x="26" y="132">2. Crop</text>
-    <text class="text" x="26" y="158">Objekte erkennen</text>
-    <text class="text" x="26" y="178">und ausschneiden</text>
+    <text class="label" x="26" y="124">2. Überprüfen</text>
+    <text class="text" x="26" y="151">Gesamtbild erfassen</text>
+    <text class="small" x="26" y="171">Segmentierung optional</text>
   </g>
 
   <path class="arrow" d="M550 190 H626" />
@@ -54,20 +53,20 @@
     <rect class="card" x="0" y="0" width="185" height="190" rx="12" />
     <circle class="icon" cx="92" cy="57" r="34" />
     <path class="accent" d="M78 58l10 10 21-27 9 7-29 37-20-20z" />
-    <text class="label" x="24" y="124">3. Freshify</text>
-    <text class="text" x="24" y="151">edible oder</text>
-    <text class="text" x="24" y="171">non_edible</text>
+    <text class="label" x="24" y="124">3. Klassifizieren</text>
+    <text class="text" x="24" y="151">Freshify-Labels</text>
+    <text class="text" x="24" y="171">edible / non_edible</text>
   </g>
 
   <path class="arrow" d="M846 190 H922" />
 
   <g transform="translate(942 96)">
-    <rect class="review" x="0" y="0" width="105" height="190" rx="12" />
+    <rect class="review" x="0" y="0" width="145" height="190" rx="12" />
     <circle cx="52" cy="52" r="28" fill="#fffaf0" stroke="#d6923a" stroke-width="2" />
     <path d="M39 56l9 9 20-27" fill="none" stroke="#9b5a13" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" />
     <text class="label" x="19" y="124">4. Review</text>
-    <text class="text" x="18" y="151">Mensch</text>
-    <text class="text" x="18" y="171">prüft final</text>
+    <text class="text" x="18" y="151">Finale Prüfung</text>
+    <text class="text" x="18" y="171">durch Mensch</text>
   </g>
 
   <text class="small" x="54" y="322">Das Modell priorisiert auffällige Fälle. Die finale Entscheidung bleibt beim Menschen.</text>

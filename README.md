@@ -6,9 +6,9 @@ Forschungsfrage: Kann ein leichtgewichtiges MobileNetV2-Transfer-Learning-Modell
 
 ## Business Case
 
-Freshify ist als Assistenzsystem für die Vorsortierung im Tafel-/Wareneingang-Kontext gedacht. Das Modell trifft keine finale Wegwerfentscheidung, sondern markiert auffällige Lebensmittel für eine anschließende menschliche Prüfung. In diesem Human-in-the-loop-Setup sind übersehene verdorbene Lebensmittel kritischer als unnötig markierte essbare Lebensmittel. Perspektivisch kann eine Object-Detection-Stufe einzelne Lebensmittel erkennen und als Crops an den Classifier übergeben.
+Freshify ist als Assistenzsystem für die Vorsortierung im Tafel-/Wareneingang-Kontext gedacht. Das Modell trifft keine finale Wegwerfentscheidung, sondern markiert auffällige Lebensmittel für eine anschließende menschliche Prüfung. Im Standardworkflow wird das Gesamtbild als `edible` oder `non_edible` klassifiziert. Optional kann ein Detailmodus Produktbereiche segmentieren und als Overlay anzeigen (Preview).
 
-![Business-Case-Workflow: Bildaufnahme, optionaler Crop, Klassifikation, Human Review](docs/images/business_case_workflow.svg)
+![Business-Case-Workflow: Bildaufnahme, Gesamtbildklassifikation, optionaler Detailmodus, Human Review](docs/images/business_case_workflow.svg)
 
 ## Kurzüberblick
 
@@ -45,9 +45,14 @@ Voraussetzung: `uv` ist installiert. Installation siehe https://docs.astral.sh/u
 Setup:
 
 ```bash
+uv sync
+```
+
+Optional für den Detailmodus:
+
+```bash
 uv pip install torch torchvision
 uv pip install git+https://github.com/ChaoningZhang/MobileSAM.git
-uv sync
 ```
 
 ### Predict
@@ -130,6 +135,7 @@ food_freshness/
 │   └── val/
 ├── models/
 │   └── freshify_baseline_with_new_raw.keras
+│   └── mobile_sam.pt
 ├── notebooks/
 │   ├── 01_data_exploration_and_preprocessing.ipynb
 │   ├── 02_training.ipynb
@@ -138,10 +144,10 @@ food_freshness/
 ├── src/
 │   ├── data.py
 │   ├── evaluate.py
+│   ├── detector.py
 │   ├── predict.py
 │   ├── train.py
 │   └── util.py
-├── NOTEBOOKS.md
 ├── README.md
 ├── pyproject.toml
 └── uv.lock
@@ -152,4 +158,5 @@ food_freshness/
 - Der Datensatz ist klein.
 - Die Kategorien sind nicht vollständig balanciert.
 - Ein echter Real-World-Holdout mit `edible` und `non_edible` fehlt noch.
-- Object Detection und Cropping sind perspektivisch, aber nicht Teil des aktuellen Klassifikators.
+- Die Default-Pipeline bewertet immer das Gesamtbild.
+- Eine Segmentierung ist als optionaler Detailmodus implementiert und stellt kein eigenes Frischekriterium dar.

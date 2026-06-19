@@ -2531,7 +2531,7 @@ def generate_pdf(
         ["ML-Konfidenz", f"{confidence:.4f}"],
         ["Erkannte Objekte", str(len(detections)) if detections else "1 (Demo)"],
         ["Frischemodell", engines.get("freshness", "–")],
-        ["Objekterkennung", engines.get("detection", "–")],
+        ["Detailmodus", engines.get("detection", "–")],
         ["Zeitpunkt", timestamp],
         ["App-Version", APP_VERSION],
     ]
@@ -3226,8 +3226,8 @@ if st.session_state.page == "team":
     <div class="f-card">
         <h3>Unser Ansatz</h3>
         <p>
-            Der Prototyp kombiniert Objekterkennung, bildbasierte Frischebewertung,
-            visuelle Overlays und strukturierte Exporte. Ziel ist eine Lösung, die
+            Der Prototyp kombiniert Gesamtbildklassifikation, einen optionalen
+            Segmentierungsmodus, visuelle Overlays und strukturierte Exporte. Ziel ist eine Lösung, die
             Mitarbeitende unterstützt, ohne menschliche Qualitätskontrolle oder
             sensorische Prüfungen zu ersetzen.
         </p>
@@ -3292,11 +3292,11 @@ if st.session_state.page == "about":
         "modeling": {
             "number": "04",
             "button": "Modeling",
-            "title": "CNN und YOLO modellieren",
+            "title": "Klassifikation und Detailmodus modellieren",
             "copy": (
-                "Das CNN lernt visuelle Frischemerkmale, während YOLO Produkte und deren "
-                "Positionen erkennt. Hyperparameter, Schwellenwerte und Modellvarianten "
-                "werden iterativ verglichen, ohne den Business-Kontext aus den Augen zu verlieren."
+                "Das CNN lernt visuelle Frischemerkmale für die Gesamtbildbewertung. "
+                "MobileSAM wird als optionaler Detailmodus genutzt, um Produktbereiche "
+                "sichtbar zu machen, ohne den Standardablauf zu verlangsamen."
             ),
         },
         "evaluation": {
@@ -3369,33 +3369,32 @@ if st.session_state.page == "about":
         f"""
 <div class="f-about">
     <div class="f-ml-viz">
-        <div class="f-ml-viz-head">Vom Prototyp zur produktgenauen Frischeanalyse</div>
+        <div class="f-ml-viz-head">Vom Eingangsbild zum nachvollziehbaren Befund</div>
         <div class="f-ml-viz-copy">
-            Im Prototyp wurden CNN und YOLO trainiert beziehungsweise angebunden:
-            Das CNN bewertet aktuell das Gesamtbild, YOLO liefert Produktpositionen.
-            Die produktweise Crop-Verknüpfung ist als nächster Endprodukt-Schritt vorgesehen.
+            Der Standardworkflow bewertet das Gesamtbild mit dem Frischemodell.
+            Der MobileSAM-Detailmodus segmentiert bei Bedarf Produktbereiche und
+            ergänzt das Overlay, ohne zusätzlichen Frischeentscheid je Objekt.
         </div>
         <div class="f-pipeline">
             <div class="f-data-pulse"></div>
             <div class="f-pipe-node"><div class="f-pipe-visual f-input-visual"><span></span></div><div class="f-pipe-title">Eingangsbild</div><div class="f-pipe-sub">Kamera oder Galerie</div></div>
-            <div class="f-pipe-node"><div class="f-pipe-visual f-yolo-visual"></div><div class="f-pipe-title">YOLO · Prototyp</div><div class="f-pipe-sub">Findet Produkte und Bounding Boxes</div></div>
-            <div class="f-pipe-node"><div class="f-pipe-visual f-crop-visual"></div><div class="f-pipe-title">Crop · geplant</div><div class="f-pipe-sub">Schneidet jede Box für eine Einzelbewertung aus</div></div>
-            <div class="f-pipe-node"><div class="f-pipe-visual f-cnn-visual"></div><div class="f-pipe-title">CNN · Prototyp</div><div class="f-pipe-sub">Bewertet derzeit das Gesamtbild</div></div>
-            <div class="f-pipe-node"><div class="f-pipe-visual f-overlay-visual"></div><div class="f-pipe-title">Overlay · Zielbild</div><div class="f-pipe-sub">Position plus Einzelbewertung ergibt Grün oder Rot</div></div>
+            <div class="f-pipe-node"><div class="f-pipe-visual f-cnn-visual"></div><div class="f-pipe-title">Freshify · Standard</div><div class="f-pipe-sub">Bewertet das Gesamtbild</div></div>
+            <div class="f-pipe-node"><div class="f-pipe-visual f-yolo-visual"></div><div class="f-pipe-title">SAM · optional</div><div class="f-pipe-sub">Segmentiert Produktbereiche</div></div>
+            <div class="f-pipe-node"><div class="f-pipe-visual f-crop-visual"></div><div class="f-pipe-title">Detailmodus</div><div class="f-pipe-sub">Ergänzt Boxen im Overlay</div></div>
+            <div class="f-pipe-node"><div class="f-pipe-visual f-overlay-visual"></div><div class="f-pipe-title">Review</div><div class="f-pipe-sub">Mensch prüft final</div></div>
         </div>
     </div>
     <div class="f-card">
         <h3>Idee im Ablauf und aktueller Prototyp</h3>
         <p>
             <strong>Bereits umgesetzt:</strong> Das CNN wurde für die visuelle
-            Frischebewertung trainiert und bewertet im Prototyp ein Gesamtbild.
-            YOLO ist für die Erkennung und Positionierung von Produkten angebunden.
-            Beide Ergebnisse werden in der Oberfläche demonstriert.<br><br>
-            <strong>Für das Endprodukt vorgesehen:</strong> Jede YOLO-Box wird als
-            eigener Crop an das CNN übergeben. Dadurch erhält jedes Produkt eine
-            individuelle Bewertung und kann innerhalb derselben Kiste korrekt grün
-            oder rot markiert werden. Dieser Verknüpfungsschritt ist noch nicht
-            Bestandteil des aktuellen Prototyps.
+            Frischebewertung trainiert und bewertet im Standardmodus das Gesamtbild.
+            Der Detailmodus nutzt MobileSAM, um Produktbereiche zu segmentieren und
+            das Overlay nachvollziehbarer zu machen.<br><br>
+            <strong>Business-Case-Workflow:</strong> Foto erfassen, Gesamtbild als
+            <code>edible</code> oder <code>non_edible</code> klassifizieren,
+            optional Segmentierungsdetails anzeigen und den Befund anschließend
+            menschlich prüfen.
         </p>
     </div>
     <div class="f-card">
@@ -3408,7 +3407,7 @@ if st.session_state.page == "about":
         <div class="f-flow-row">
             <div class="f-flow-num">2</div>
             <div><div class="f-flow-title">ML-Modelle ausführen</div>
-            <div class="f-flow-copy">Ein Klassifikator bewertet sichtbare Frischemerkmale; eine optionale Objekterkennung lokalisiert Produkte.</div></div>
+            <div class="f-flow-copy">Der Klassifikator bewertet das Gesamtbild; der Detailmodus lokalisiert Produktbereiche optional mit MobileSAM.</div></div>
         </div>
         <div class="f-flow-row">
             <div class="f-flow-num">3</div>
@@ -3425,11 +3424,10 @@ if st.session_state.page == "about":
         <h3>Schnittstellenstatus in v{APP_VERSION}</h3>
         <p>
             Freshify bindet ein Frischemodell über <strong>src.predict.predict_image</strong>
-            und eine Objekterkennung über <strong>src.yolo.main.detect_objects</strong> an.
-            Training und Prototypenlogik für CNN und YOLO sind vorgesehen beziehungsweise
-            projektseitig angebunden. Die produktweise Crop-Klassifikation ist noch Teil
-            der geplanten Endproduktarchitektur. Fehlen Modellmodule, wechselt die
-            Oberfläche sichtbar in den Demo-Modus.
+            an. Der optionale Detailmodus nutzt <strong>src.detector.detect_objects</strong>
+            für MobileSAM-Segmentierung und Food-Vorklassifizierung. Fehlen Modellmodule,
+            bleibt die Gesamtbildklassifikation der Standardpfad; der Detailmodus liefert
+            dann keine Objektboxen.
         </p>
     </div>
     <div class="f-card">
