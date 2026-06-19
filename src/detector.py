@@ -1,4 +1,7 @@
 import os
+import traceback
+import keras
+from keras.applications.efficientnet import decode_predictions
 import numpy as np
 from PIL import Image
 from datetime import datetime
@@ -6,7 +9,6 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from mobile_sam import sam_model_registry, SamAutomaticMaskGenerator
 
-RUN_DIR = os.path.join("logs", datetime.now().strftime("%Y%m%d_%H%M%S"))
 
 class Detector:
     """
@@ -17,9 +19,17 @@ class Detector:
     """
     
     def __init__(self):
-        os.makedirs(RUN_DIR, exist_ok=True)
+        self.run_dir = os.path.join(
+            "logs/detector/",
+            datetime.now().strftime("%Y%m%d_%H%M%S")
+        )
+        os.makedirs(self.run_dir, exist_ok=True)
         model = self.load_segmentation()
-        self.score_threshold = 0.8
+        self.score_threshold = 0.725
+        self.food_classifier = keras.applications.EfficientNetB0(
+            include_top=True,
+            weights="imagenet"
+        )
         self.mask_generator = SamAutomaticMaskGenerator(
             model,
             points_per_side=32,
@@ -217,11 +227,31 @@ class Detector:
     # -----------------------------
     # SCORE FUSION
     # -----------------------------
-    def compute_final_score(self, mask):
+    def compute_final_score(self, score, mask):
         return (
-            0.7 * mask.get("predicted_iou", 0.0) +
-            0.3 * mask.get("stability_score", 0.0)
+            0.7 * score +
+            0.2 * mask.get("predicted_iou", 0.0) +
+            0.1 * mask.get("stability_score", 0.0)
         )
+
+    def _food_score(self, crop):
+        """Berechnet Food-Score für genau einen CROP. """
+        arr = np.array(crop.resize((224, 224)).convert("RGB"), dtype=np.float32)
+        
+        arr = keras.applications.efficientnet.preprocess_input(arr)
+        arr = np.expand_dims(arr, axis=0)
+
+        preds = self.food_classifier(arr)        
+        classes = decode_predictions(preds, top=3)[0]
+        
+        food_class = "background"
+        food_score = 0.0        
+        for _, lable, score in classes:
+            if float(score) > 0.5:
+                food_class = lable
+                food_score = float(score)
+        
+        return food_class, food_score
 
     # -----------------------------
     # IOU + NMS
@@ -265,58 +295,62 @@ class Detector:
     # MAIN PIPELINE
     # -----------------------------
     def detect_objects(self, image: Image.Image):
+        try:
+            H, W = image.size[1], image.size[0]
 
-        H, W = image.size[1], image.size[0]
+            print("Starting SAM segmentation...")
+            masks = self.segment_everything(image)
+            # DEBUG
+            self.show_segments(image=image, masks=masks)
+            self.show_segments_with_boxes(image=image, masks=masks) 
+            print(f"Generated {len(masks)} masks")
 
-        masks = self.segment_everything(image)
-        
-        #DEBUG:
-        self.show_segments(
-            image=image,
-            masks=masks,
-        )
-        
-        proposals = []
+            proposals = []
+            
+            for mask in masks:
+                if not self.is_valid_mask(mask):
+                    continue
 
-        for mask in masks:
+                box = self.mask_to_box(mask["segmentation"])
+                box = self.clamp_box(box, W, H)
+                if box is None:
+                    continue
 
-            if not self.is_valid_mask(mask):
-                continue
+                crop = self.safe_crop(image, box)
+                if crop is None:
+                    continue
 
-            box = self.mask_to_box(mask["segmentation"])
-            box = self.clamp_box(box, W, H)
+                lable, score = self._food_score(crop)
+                final_score = self.compute_final_score(
+                    score,
+                    mask,
+                )
+                if final_score < self.score_threshold:
+                    continue
 
-            if box is None:
-                continue
+                proposals.append({
+                    "box": box,
+                    "score": final_score,
+                    "label": lable,
+                })
+                self._non_max_suppression(proposals, iou_threshold=0.25)
+                
+            #DEBUG:
+            self.show_detections(image, proposals)
+            return proposals 
 
-            crop = self.safe_crop(image, box)
+        except Exception as e:
 
-            if crop is None:
-                continue
+            print("\n" + "=" * 10)
+            print("DETECT_OBJECTS FAILED")
+            print("=" * 10)
+            print(f"Exception Type: {type(e).__name__}")
+            print(f"Exception: {e}")
+            print("\nTraceback:")
+            traceback.print_exc()
+            print("=" * 10)
 
-            final_score = self.compute_final_score(mask)
-            if final_score < self.score_threshold:
-                continue
-
-            proposals.append({
-                "box": box,
-                "score": final_score,
-                "label": "product",
-            })
-
-        proposals = self._non_max_suppression(
-            proposals,
-            iou_threshold=0.25
-        )
-
-        #DEBUG:
-        self.show_detections(image, proposals)        
-        return proposals
-
-        # return self._non_max_suppression(
-        #     proposals,
-        #     iou_threshold=0.25
-        # )
+            return []
 
 
 # Singleton
