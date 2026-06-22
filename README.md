@@ -2,7 +2,7 @@
 
 Binäres Bildklassifikationsprojekt zur Bewertung von Lebensmittelbildern als `edible` oder `non_edible`.
 
-Forschungsfrage: Kann ein leichtgewichtiges MobileNetV2-Transfer-Learning-Modell Obst- und Gemüsebilder zuverlässig als essbar oder nicht mehr essbar klassifizieren?
+Forschungsfrage: Kann ein leichtgewichtiges MobileNetV2-Modell mithilfe von Transfer Learning Bilder von Obst und Gemüse anhand visueller Merkmale zuverlässig in die Klassen „essbar“ und „nicht mehr essbar“ klassifizieren?
 
 Hier gehts zur [Demo](https://freshify.streamlit.app/) der Anwendung.
 
@@ -39,7 +39,9 @@ Unterstützte Kategorien:
 
 ## Designentscheidungen
 
+- Die Modellauswahl wurde primär auf den geplanten Einsatz in Mobile-First- und Embedded-Szenarien ausgerichtet daher war entscheidend insbesondere Modellgröße, Inferenzzeit und Ressourcenbedarf.
 - MobileNetV2 wurde gewählt, um ein gutes Verhältnis zwischen Repräsentationsfähigkeit und Overfitting-Risiko bei einem kleinen, heterogenen Datensatz zu erreichen.
+- Der Detailmodus wurde bewusst als optionaler Modus gekapselt, damit Segmentierung und Objekterkennung die Standardpipeline nicht verlangsamen aufgrund von hoher CPU-Rechenleistung somit bleibt die Frischeentscheidung weiterhin beim Gesamtbildklassifikator.
 - Auf aggressive Datenaugmentation wurde bewusst verzichtet, da subtile Farb- und Texturmerkmale zentrale Indikatoren für Frische sind und durch starke Transformationen verfälscht werden können.
 - Die Frischebewertung wird als binäre Klassifikation (`edible` vs. `non_edible`) formuliert, da Frische-Grenzfälle inhärent unscharf sind und das System als Assistenz für menschliche Prüfung dient.
 - Der Recall der Klasse `non_edible` wird priorisiert, da False Negatives im Anwendungskontext höhere reale Kosten verursachen als False Positives.
