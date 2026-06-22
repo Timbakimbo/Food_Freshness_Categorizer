@@ -6,6 +6,11 @@ Forschungsfrage: Kann ein leichtgewichtiges MobileNetV2-Transfer-Learning-Modell
 
 Hier gehts zur [Demo](https://freshify.streamlit.app/) der Anwendung.
 
+Die Entwicklung des Machine-Learning-Prototyps erfolgte iterativ entlang des CRISP-DM-Prozessmodells, insbesondere durch wiederholte Schleifen zwischen Business Understanding, Data Understanding, Data Preparation, Modelling und Evaluation.
+<sub><span style="color:gray">
+Chapman, P., Clinton, J., Kerber, R., Khabaza, T., Reinartz, T., Shearer, C., &amp; Wirth, R. (2000). <i>CRISP-DM 1.0: Step-by-step data mining guide</i>. CRISP-DM Consortium.
+</span></sub>
+
 ## Business Case
 
 Freshify ist als Assistenzsystem für die Vorsortierung im Tafel-/Wareneingang-Kontext gedacht. Das Modell trifft keine finale Wegwerfentscheidung, sondern markiert auffällige Lebensmittel für eine anschließende menschliche Prüfung. Im Standardworkflow wird das Gesamtbild als `edible` oder `non_edible` klassifiziert. Optional kann ein Detailmodus Produktbereiche segmentieren und als Overlay anzeigen (Preview).
@@ -31,6 +36,23 @@ Unterstützte Kategorien:
 - Orange
 - Paprika
 - Zitrone
+
+## Designentscheidungen
+
+- MobileNetV2 wurde gewählt, um ein gutes Verhältnis zwischen Repräsentationsfähigkeit und Overfitting-Risiko bei einem kleinen, heterogenen Datensatz zu erreichen.
+- Auf aggressive Datenaugmentation wurde bewusst verzichtet, da subtile Farb- und Texturmerkmale zentrale Indikatoren für Frische sind und durch starke Transformationen verfälscht werden können.
+- Die Frischebewertung wird als binäre Klassifikation (`edible` vs. `non_edible`) formuliert, da Frische-Grenzfälle inhärent unscharf sind und das System als Assistenz für menschliche Prüfung dient.
+- Der Recall der Klasse `non_edible` wird priorisiert, da False Negatives im Anwendungskontext höhere reale Kosten verursachen als False Positives.
+
+## Evaluation & Fehlertypen
+
+- Die Modellbewertung erfolgt auf einem vom Training getrennten Validierungsdatensatz (Train/Validation-Split), um die Generalisierungsfähigkeit objektiv zu beurteilen.
+
+- Hinweis: Alle Modell- und Threshold-Vergleiche basieren bewusst auf demselben Validation Split (`data/val`), da nur so Metriken und Fehlerzahlen direkt vergleichbar sind.
+
+- Ein Fokus liegt auf dem Recall der Klasse `non_edible`, da ein verdorbenes Lebensmittel fälschlich als essbar zu klassifizieren schwerwiegender ist als umgekehrt.
+
+- Zur qualitativen Bewertung werden False Positives und False Negatives analysiert, um zu prüfen, ob Fehlklassifikationen überwiegend an Frische-Grenzfällen auftreten und nicht systematisch durch bestimmte Kategorien oder Bildartefakte verursacht werden.
 
 ## Get Started
 
