@@ -2,7 +2,7 @@
 
 Binäres Bildklassifikationsprojekt zur Bewertung von Lebensmittelbildern als `edible` oder `non_edible`.
 
-Forschungsfrage: Kann ein leichtgewichtiges MobileNetV2-Modell mithilfe von Transfer Learning Bilder von Obst und Gemüse anhand visueller Merkmale zuverlässig in die Klassen „essbar“ und „nicht mehr essbar“ klassifizieren?
+Forschungsfrage: Kann ein leichtgewichtiges ML-Modell anhand ausschließlich visueller Merkmale in Bildern zuverlässig die Frische von Lebensmitteln klassifizieren?
 
 Hier gehts zur [Demo](https://freshify.streamlit.app/) der Anwendung.
 
