@@ -145,7 +145,7 @@ Die aktuelle Baseline mit `new_raw` im Training ist auf `data/val` der stärkste
 
 ## Augmentation
 
-Die finale Baseline wurde auf dem aktuellen `train`-Split trainiert. Dieser Split enthält einen Mix aus Kaggle-Bildern, eigenen Smartphonebildern und einzelnen bereits augmentierten bzw. dataset-seitig erzeugten Varianten. Der Vergleich in der Tabelle bewertet deshalb nicht "Originaldaten gegen Augmentation", sondern unterschiedliche Trainingsstände: Die zusätzliche Standard- und Background-Augmentation im Trainingsprozess hat bisher keinen besseren Stand geliefert als die aktuelle Baseline mit bereinigten Daten und ergänzten echten Smartphonebildern.
+Die finale Baseline wurde auf dem aktuellen `train`-Split trainiert. Dieser Split enthält einen Mix aus Kaggle-Bildern, eigenen Smartphonebildern und einzelnen augmentierten Varianten. Der Vergleich in der Tabelle bewertet deshalb nicht "Originaldaten gegen Augmentation", sondern unterschiedliche Trainingsstände: Die zusätzliche Standard- und Background-Augmentation im Trainingsprozess hat bisher keinen besseren Stand geliefert als die aktuelle Baseline mit bereinigten Daten und ergänzten echten Smartphonebildern.
 
 ## Projektstruktur
 
